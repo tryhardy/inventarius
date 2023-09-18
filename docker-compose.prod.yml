@@ -1,0 +1,17 @@
+services:
+  inventarius:
+    image: node:20
+    container_name: inventarius
+    volumes:
+      - ./:/app
+    environment:
+      PORT: ${PORT}
+      MONGO_URL: ${MONGO_URL}
+      DB_HOST: ${DB_HOST}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - ${PORT}:${PORT}
+    working_dir: /app
+    command: npm run prod

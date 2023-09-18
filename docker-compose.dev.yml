@@ -1,0 +1,65 @@
+services:
+  #mongo db service
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DOCKER_MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DOCKER_MONGO_INITDB_ROOT_PASSWORD}
+  #mongodb admin panel service
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - ${DOCKER_MONGO_PORT}:${DOCKER_MONGO_PORT}
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${DOCKER_MONGO_INITDB_ROOT_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${DOCKER_MONGO_INITDB_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${DOCKER_MONGO_INITDB_ROOT_USERNAME}:${DOCKER_MONGO_INITDB_ROOT_PASSWORD}@mongo:27017
+  #postgres db service
+  postgres:
+    image: postgres:13.3
+    container_name: postgres
+    environment:
+      POSTGRES_DB: ${DOCKER_DB_DATABASE}
+      POSTGRES_USER: ${DOCKER_DB_USERNAME}
+      POSTGRES_PASSWORD: ${DOCKER_DB_PASSWORD}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    ports:
+      - "${DOCKER_DB_PORT}:${DOCKER_DB_PORT}"
+  #postgres admin panel service
+  pgadmin-compose:
+    image: dpage/pgadmin4
+    container_name: pgadmin-compose
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "placeholder@example.com"
+      PGADMIN_DEFAULT_PASSWORD: "fakepassword123!"
+    ports:
+      - "16543:80"
+    depends_on:
+      - postgres
+  #express-app service
+  inventarius:
+    image: node:20
+    container_name: inventarius
+    volumes:
+      - ./:/app
+    environment:
+      PORT: ${DOCKER_PORT}
+      MONGO_URL: ${DOCKER_MONGO_URL}
+      DB_HOST: ${DOCKER_DB_HOST}
+      DB_DATABASE: ${DOCKER_DB_DATABASE}
+      DB_USERNAME: ${DOCKER_DB_USERNAME}
+      DB_PASSWORD: ${DOCKER_DB_PASSWORD}
+    ports:
+      - ${DOCKER_PORT}:${DOCKER_PORT}
+    working_dir: /app
+    command: npm run dev
+    depends_on:
+      - mongo
+      - postgres
+volumes:
+  db-data:
