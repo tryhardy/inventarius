@@ -21,7 +21,7 @@
 ## Установка
 
 Для корректной работы контейнеров и самого приложения требуется создать файл **.env** следующего содержания:
-```
+```bash
 #Run with docker-compose
 DOCKER_MONGO_PORT='8081'
 DOCKER_MONGO_URL='mongodb://root:password@mongo:27017/'
@@ -31,7 +31,8 @@ DOCKER_MONGO_INITDB_ROOT_PASSWORD='password'
 
 DOCKER_DB_PORT='5432'
 DOCKER_DB_DATABASE='inventarius'
-DOCKER_DB_USERNAME='inventarius' #важно, чтобы название БД совпадало с именем юзера
+#важно, чтобы название БД совпадало с именем юзера
+DOCKER_DB_USERNAME='inventarius' 
 DOCKER_DB_PASSWORD='inventarius'
 DOCKER_DB_HOST='postgres'
 
