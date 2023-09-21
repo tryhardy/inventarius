@@ -1,25 +1,15 @@
 import * as express from 'express';
 import { createServer } from 'http';
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import { mongoClient } from './options/mongo';
 import { Client } from 'pg';
+import 'winston-mongodb';
 import 'dotenv/config';
 
 const app = express.default();
 const server = createServer(app);
 const port = process.env.PORT || 3000;
 
-//MONGO CONNECT
-const url = process.env.MONGO_URL;
-const dbName = process.env.MONGO_DBNAME;
-const mongoClient = new MongoClient(url, {
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    }
-});
-
-//POSTGRES CONNECT
+// Postgres connect
 const pgClient = new Client({
     password: process.env.DB_PASSWORD,
     user: process.env.DB_USERNAME,
@@ -27,34 +17,49 @@ const pgClient = new Client({
     database: process.env.DB_NAME
 });
 
+// Import routes
+import routIndex from './routes/index';
+
+// Import middlewares
+import routLogger from './middleware/loggers/rout';
+import { setDefaultError, error400, error401, error403, error404 } from './middleware/errors';
+import { logErrorsHandler } from './middleware/handlers';
+
+// Use routes
+
+// Logging all requests
+app.use(routLogger);
+
+// Path to files storage for public usage
 app.use(express.static("public"));
 
-app.get('/', (req, res) => {
-    res.send('Inventarius api')
-})
+// Api routes
+app.use('/', routIndex);
+
+// Error handlers
+app.use(setDefaultError) // Default error code - 404
+app.use(error400, error401, error403, error404);
+
+// Log request result errors
+app.use(logErrorsHandler);
 
 async function start() {
     try {
         // Test connection to MongoDB
-        await mongoClient.connect()
-            .then((obj) => {
-                console.log('Connected to database MongoDB');
-            })
-            .catch((error) => {
-                console.error('ERROR:', error.message);
-            });
-
-        const mongoDb = mongoClient.db(dbName);
+        mongoClient.connect().then((obj) => {
+            console.log('Connected to database MongoDB');
+        }).catch((error) => {
+            console.error('ERROR:', error.message);
+        });
 
         // Test connection to PostgreSQL
-        await pgClient.connect()
-            .then((obj) => {
-                    console.log('Connected to database PostgreSQL');
-            })
-            .catch((error) => {
-                console.error('ERROR:', error.message);
-            });
+        await pgClient.connect().then((obj) => {
+            console.log('Connected to database PostgreSQL');
+        }).catch((error) => {
+            console.error('ERROR:', error.message);
+        });
 
+        // Start our application
         app.listen(port);
     }
     catch (e) {
