@@ -5,7 +5,7 @@
 - PostgreSQL
 - MongoDB
 - Docker
-- Node.js >20
+- Node.js >= 20
 
 ## Контейнеры
 

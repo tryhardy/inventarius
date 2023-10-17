@@ -2,7 +2,7 @@ import { IError } from "../interfaces/ierror";
 import { ErrorCodes } from "../enums/error-codes";
 
 /**
- * Устанавливает ошибку по умолчанию, если ни один из маршрутов не был применен
+ * Устанавливает ошибку по умолчанию, если ни один из роутов не сработал
  * @param req 
  * @param res 
  * @param next 
@@ -17,7 +17,7 @@ export function setDefaultError (req, res, next) {
 }
 
 /**
- * Запрос некорректно сформирован (ошибка валидации запроса)
+ *Тип ошибки: Запрос некорректно сформирован (ошибка валидации запроса)
  * @param err 
  * @param req 
  * @param res 
@@ -43,7 +43,7 @@ export function error400 (err, req, res, next) {
 }
 
 /**
- * Пользователь неавторизован
+ * Тип ошибки: Пользователь неавторизован
  * @param err 
  * @param req 
  * @param res 
@@ -69,7 +69,7 @@ export function error401 (err, req, res, next) {
 }
 
 /**
- * В доступе на страницу отказано
+ * Тип ошибки: В доступе отказано
  * @param err 
  * @param req 
  * @param res 
@@ -95,7 +95,7 @@ export function error403 (err, req, res, next) {
 }
 
 /**
- * Маршрут не найден
+ * Тип ошибки: Маршрут не найден
  * @param err 
  * @param req 
  * @param res 

@@ -14,4 +14,4 @@ services:
     ports:
       - ${PORT}:${PORT}
     working_dir: /app
-    command: npm run prod
+    command: npm run start:prod

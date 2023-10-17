@@ -57,7 +57,7 @@ services:
     ports:
       - ${DOCKER_PORT}:${DOCKER_PORT}
     working_dir: /app
-    command: npm run dev
+    command: npm run start:dev
     depends_on:
       - mongo
       - postgres

@@ -21,9 +21,8 @@ const pgClient = new Client({
 import routIndex from './routes/index';
 
 // Import middlewares
-import routLogger from './middleware/loggers/rout';
+import { routLogger, errorRoutLogger } from './middleware/loggers';
 import { setDefaultError, error400, error401, error403, error404 } from './middleware/errors';
-import { logErrorsHandler } from './middleware/handlers';
 
 // Use routes
 
@@ -41,7 +40,7 @@ app.use(setDefaultError) // Default error code - 404
 app.use(error400, error401, error403, error404);
 
 // Log request result errors
-app.use(logErrorsHandler);
+app.use(errorRoutLogger);
 
 async function start() {
     try {
