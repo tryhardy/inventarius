@@ -1,5 +1,5 @@
 ## Описание
-Ниже описан использованный технологический стек:
+Технологический стек:
 
 - Express.js
 - PostgreSQL
@@ -20,38 +20,16 @@
 
 ## Установка
 
-Для корректной работы контейнеров и самого приложения требуется создать файл **.env** следующего содержания:
-```bash
-#Run with docker-compose
-DOCKER_MONGO_PORT='8081'
-DOCKER_MONGO_URL='mongodb://root:password@mongo:27017/'
-DOCKER_MONGO_DBNAME='inventarius'
-DOCKER_MONGO_INITDB_ROOT_USERNAME='root'
-DOCKER_MONGO_INITDB_ROOT_PASSWORD='password'
-
-DOCKER_DB_PORT='5432'
-DOCKER_DB_DATABASE='inventarius'
-#важно, чтобы название БД совпадало с именем юзера
-DOCKER_DB_USERNAME='inventarius' 
-DOCKER_DB_PASSWORD='inventarius'
-DOCKER_DB_HOST='postgres'
-
-DOCKER_PORT='3000'
-
-#Run in simple mode
-PORT='3000'
-MONGO_URL='mongodb://127.0.0.1:27017/'
-MONGO_DBNAME='inventarius'
-DB_HOST='localhost'
-DB_DATABASE='inventarius'
-DB_USERNAME='inventarius'
-DB_PASSWORD='inventarius'
-```  
+Для корректной работы контейнеров и самого приложения требуется создать файл **.env** (пример в файле .env-example)
 
 ```bash
 #Устанавливаем все зависимости командой:
 $ npm install
 ```
+
+## Способы запуска:
+- Через Docker
+- Без Docker
 
 ## Старт приложения через Docker  
 
@@ -75,8 +53,8 @@ $ npm run start:prod
 
 ## Ошибки
 
-Коды ошибок хранятся в **/src/options/error-codes.ts**.  
-Методы, в которых прописан вывод ошибок: **/src/middleware/errors.ts**  
+Коды ошибок хранятся в **\src\enums\error-codes.ts**.  
+Методы, в которых прописан вывод ошибок: **\src\middleware\errors.ts**  
 
 Виды ошибок client-side:
 - 400 - 'Bad Request' - ошибка валидации/результат не найден в БД
@@ -90,7 +68,7 @@ import { ErrorCodes } from '/src/enums/error-codes';
 
 router.get('/test', (req, res, next) => {
     // res.send() - не вызываем
-    // в метод next() передаем код ошибки
+    // в метод next() передаем код ошибки, например ErrorCodes.BAD_REQUEST
     // если не передать код ошибки - тогда по умолчанию выведется 404
     next(ErrorCodes.BAD_REQUEST);
 });
@@ -116,7 +94,7 @@ router.get('/test', (req, res, next) => {
 
 В логи записывается каждое обращение к api перед роутингом.  
 В логи записывается каждая ошибка обращения к api после роутинга.  
-Логировать можно что угодно: отправку писем, изменения записей в БД и т.д. 
+Логировать можно что угодно: отправку писем, изменения записей в БД и т.д., методом, описанным ниже:
 ```ts
 import { getLogger } from '/src/middleware/loggers/logger'
 

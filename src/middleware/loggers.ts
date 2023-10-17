@@ -2,7 +2,6 @@ import expressWinston from "express-winston";
 import winston, { Logger } from "winston";
 import 'winston-mongodb';
 import { defaultLogOption, createLogOptions } from '../options/winston-mongodb-options'
-import { request } from "https";
 
 const date = new Date();
 //date.getMonth() function is zero indexed based
