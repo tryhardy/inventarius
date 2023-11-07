@@ -28,3 +28,14 @@ export interface ICompanyWorkerUpdate {
     user_id ?: string,
     role ?: string
 }
+
+//Интерфейс таблицы со списком сотрудников компаний
+export interface ICompanyWorkerFilter {
+    company_id ?: string, 
+    name ?: string,
+    last_name ?: string,
+    post ?: string,
+    user_id ?: string,
+    active ?: boolean,
+    role ?: string
+}

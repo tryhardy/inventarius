@@ -1,18 +1,24 @@
 import express from 'express';
 import getLogger from '../middleware/loggers';
 import { ErrorCodes } from '../enums/error-codes';
+import { ISuccess } from '../interfaces/isuccess';
 
 const router = express.Router();
 
 router.get('/', (req, res, next) => {
 
-    let data = {
-        level: 'info',
-        message: 'This is super secret - hide it.',
+    let status = 200;
+    let result : ISuccess = {
+        status: 'SUCCESS',
+        code: status,
+        data: {
+            access_token: 'Some token for use'
+        },
+        date: (new Date()).toString()
     }
 
-    res.status(200);
-    res.send(data);    
+    res.status(status);
+    res.send(result);
 });
 
 export default router;

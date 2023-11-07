@@ -30,7 +30,9 @@ export function error400 (err, req, res, next) {
         let errorMessage : IError = {
             status: 'ERROR',
             code: code,
-            message: 'Bad Request'
+            data: {},
+            message: 'Bad Request',
+            date: (new Date()).toString()
         }
     
         res.status(code);
@@ -56,7 +58,9 @@ export function error401 (err, req, res, next) {
         let errorMessage : IError = {
             status: 'ERROR',
             code: code,
-            message: 'Unauthorized'
+            data: {},
+            message: 'Unauthorized',
+            date: (new Date()).toString()
         }
     
         res.status(code);
@@ -82,7 +86,9 @@ export function error403 (err, req, res, next) {
         let errorMessage : IError = {
             status: 'ERROR',
             code: code,
-            message: 'Access denied'
+            data: {},
+            message: 'Access denied',
+            date: (new Date()).toString()
         }
     
         res.status(code);
@@ -108,7 +114,9 @@ export function error404 (err, req, res, next) {
         let errorMessage : IError = {
             status: 'ERROR',
             code: code,
-            message: 'Rout not found'
+            data: {},
+            message: 'Rout not found',
+            date: (new Date()).toString()
         }
     
         res.status(code);

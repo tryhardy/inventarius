@@ -1,5 +1,7 @@
 export interface IError {
     status: string
     code: number
-    message: string
+    data ?: any,
+    message: string,
+    date: string
 }
