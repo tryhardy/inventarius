@@ -12,16 +12,7 @@ router.get('/', (req, res, next) => {
     }
 
     res.status(200);
-    res.send(data);
-
-    console.log(req)
-    const logger = getLogger(
-        data,
-        req             
-    );
-    
-    logger.log(data);
-    
+    res.send(data);    
 });
 
 export default router;
