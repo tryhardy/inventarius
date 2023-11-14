@@ -1,8 +1,6 @@
 import express from 'express';
 import getLogger from '../middleware/loggers';
-import { ErrorCodes } from '../enums/error-codes';
-import { ISuccess } from '../interfaces/isuccess';
-import { getError } from '../middleware/errors';
+import { ISuccess } from '../libs/interfaces/answers/isuccess';
 
 const router = express.Router();
 

@@ -2,13 +2,13 @@ import { Dates, ID } from "../common"
 
 //Интерфейс таблицы со списком сотрудников компаний
 export interface ICompanyWorker extends ID, Dates {
-    company_id: string, 
     name : string,
     last_name ?: string,
     post ?: string,
-    user_id ?: string,
     active: boolean,
-    role ?: string
+    company_id: string, 
+    user_id ?: string,
+    role_id ?: string
 }
 
 //Интерфейс с параметрами для создания нового сотрудника

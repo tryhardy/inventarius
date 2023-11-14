@@ -1,5 +1,5 @@
 
-import { ILogOption } from "../interfaces/ilogoption";
+import { ILogOption } from "../libs/interfaces/logs/ilogoption";
 import { url, dbName } from "./mongo";
 
 /**

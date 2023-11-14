@@ -1,10 +1,11 @@
-import { IEnumCompanyType } from "../../enums/enum-company-type"
+import { IEnumCompanyType } from "../enums/enum-company-type"
 import { Dates, ID } from "../common"
 
 //Интерфейс таблицы со списком компаний
 export interface ICompany extends ID, Dates {
-    type: IEnumCompanyType,
+    type_id: IEnumCompanyType,
     name ?: string,
+    active : boolean,
     address ?: string
     creator : string,
 }

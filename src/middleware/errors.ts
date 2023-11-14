@@ -1,16 +1,6 @@
-import { IError } from "../interfaces/ierror";
-import { ErrorCodes } from "../enums/error-codes";
-
-export function getError(code, message = '', data = {}) : IError
-{
-    return {
-        status: 'ERROR',
-        code : code,
-        data : data,
-        message: message,
-        date: (new Date).toString()
-    }
-}
+import { IError } from "../libs/interfaces/answers/ierror";
+import { ErrorCodes } from "../libs/interfaces/enums/error-codes";
+import { AppError } from "../libs/classes/error";
 
 /**
  * Устанавливает ошибку по умолчанию, если ни один из роутов не сработал
@@ -19,119 +9,48 @@ export function getError(code, message = '', data = {}) : IError
  * @param next 
  */
 export function setDefaultError (req, res, next) {
+
     if (res.statusCode < ErrorCodes.BAD_REQUEST) {
         let code : number = ErrorCodes.NOT_FOUND;
-
-        let errorMessage : IError = getError(code);
+        let error = new AppError(code);
 
         res.status(code);
-        next(errorMessage);
+        next(error);
     }
 }
 
-/**
- *Тип ошибки: Запрос некорректно сформирован (ошибка валидации запроса)
- * @param err 
- * @param req 
- * @param res 
- * @param next 
- */
-export function error400 (err, req, res, next) {
+export function setError(err : AppError, req, res, next) {
+    let message;
+    let data;
+    let error;
 
-    if (err.code == ErrorCodes.BAD_REQUEST) {
-        let code : number = ErrorCodes.BAD_REQUEST;
-
-        let errorMessage : IError = getError(
-            code,
-            err.message ? err.message : 'Bad Request',
-            err.data ? err.data : {}
-        );
-
-        res.status(code);
-        res.send(errorMessage);
-        next(errorMessage);
-    }
-    else {
-        next(err);    
-    }
-}
-
-/**
- * Тип ошибки: Пользователь неавторизован
- * @param err 
- * @param req 
- * @param res 
- * @param next 
- */
-export function error401 (err, req, res, next) {
-
-    if (err.code == ErrorCodes.UNAUTHORIZED) {
-        let code : number = ErrorCodes.UNAUTHORIZED;
-
-        let errorMessage : IError = getError(
-            code,
-            err.message ? err.message : 'Unauthorized',
-            err.data ? err.data : {}
-        );
-    
-        res.status(code);
-        res.send(errorMessage);
-        next(errorMessage);
-    }
-    else {
-        next(err);    
-    }
-}
-
-/**
- * Тип ошибки: В доступе отказано
- * @param err 
- * @param req 
- * @param res 
- * @param next 
- */
-export function error403 (err, req, res, next) {
-
-    if (err == ErrorCodes.PERMISSION_DENIED) {
-        let code : number = ErrorCodes.PERMISSION_DENIED;
-
-        let errorMessage : IError = getError(
-            code,
-            err.message ? err.message : 'Access denied',
-            err.data ? err.data : {}
-        );
-    
-        res.status(code);
-        res.send(errorMessage);
-        next(errorMessage);
-    }
-    else {
-        next(err);    
-    }
-}
-
-/**
- * Тип ошибки: Маршрут не найден
- * @param err 
- * @param req 
- * @param res 
- * @param next 
- */
-export function error404 (err, req, res, next) {
-
-    if (err.code == ErrorCodes.NOT_FOUND) {
-        let code : number = ErrorCodes.NOT_FOUND;
-
-        let errorMessage : IError = getError(
-            code,
-            err.message ? err.message : 'Rout not found',
-            err.data ? err.data : {}
-        );
-    
-        res.status(code);
-        res.send(errorMessage);
-        next(errorMessage);
+    switch (err.code) {
+        //Ошибка выполнения запроса
+        case ErrorCodes.BAD_REQUEST:
+            message = err.message ? err.message : 'Bad Request';        
+            break;
+        //Нужно авторизоваться
+        case ErrorCodes.UNAUTHORIZED:
+            message = err.message ? err.message : 'Unauthorized';
+            break;
+        //Не хватает прав для доступа к эндпойнту
+        case ErrorCodes.PERMISSION_DENIED:
+            message = err.message ? err.message : 'Access denied';
+            break;
+        //Роут не найден 404
+        case ErrorCodes.NOT_FOUND:
+            message = err.message ? err.message : 'Rout not found';
+            break;
+        //Кастомная ошибка валидации
+        default:
+            message = err.message ? err.message : 'Unhandled error';
+            break;
     }
 
-    next(err);
+    data = err.data ? err.data : {};
+    error = new AppError(err.code, message, data);
+
+    res.status(error.code);
+    res.send(error);
+    next(error);
 }

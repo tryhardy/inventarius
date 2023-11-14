@@ -1,4 +1,4 @@
-import { IEnumCompanyRoles } from "../../enums/enum-company-roles";
+import { IEnumCompanyRoles } from "../enums/enum-company-roles";
 import { Dates, ID } from "../common"
 
 export const CREATOR_COMPANY_ROLE = IEnumCompanyRoles.admin;

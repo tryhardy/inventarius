@@ -1,7 +1,7 @@
 import * as express from 'express';
 import { createServer } from 'http';
 import { mongoClient } from './options/mongo';
-import { Client } from 'pg';
+import db from './db';
 import 'winston-mongodb';
 import 'dotenv/config';
 
@@ -10,19 +10,17 @@ const server = createServer(app);
 const port = process.env.PORT || 3000;
 
 // Postgres connect
-const pgClient = new Client({
-    password: process.env.DB_PASSWORD,
-    user: process.env.DB_USERNAME,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME
-});
+db.authenticate().catch(error => console.error(error))
 
 // Import routes
 import routIndex from './routes/index';
+import routUser from './routes/user';
 
 // Import middlewares
 import { routLogger, errorRoutLogger } from './middleware/loggers';
-import { setDefaultError, error400, error401, error403, error404 } from './middleware/errors';
+import { setDefaultError, setError } from './middleware/errors';
+
+app.use(express.json())
 
 // Use routes
 
@@ -33,11 +31,12 @@ app.use(routLogger);
 app.use(express.static("public"));
 
 // Api routes
-app.use('/', routIndex);
+app.use('/api', routIndex);
+app.use('/api', routUser);
 
 // Error handlers
 app.use(setDefaultError) // Default error code - 404
-app.use(error400, error401, error403, error404);
+app.use(setError);
 
 // Log request result errors
 app.use(errorRoutLogger);
@@ -47,13 +46,6 @@ async function start() {
         // Test connection to MongoDB
         mongoClient.connect().then((obj) => {
             console.log('Connected to database MongoDB');
-        }).catch((error) => {
-            console.error('ERROR:', error.message);
-        });
-
-        // Test connection to PostgreSQL
-        await pgClient.connect().then((obj) => {
-            console.log('Connected to database PostgreSQL');
         }).catch((error) => {
             console.error('ERROR:', error.message);
         });
