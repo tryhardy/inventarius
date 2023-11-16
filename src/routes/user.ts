@@ -54,7 +54,7 @@ router.post('/user/create', UserValidationSimple, async (req, res, next) => {
     let params : IUserCreateBase = req.body;
     let companyTypeService = new CompanyTypesService();
     let companyType = await companyTypeService.get(params['company'].type);
-
+    console.log(companyType)
     if (!companyType) {
         let error = new AppError(
             ErrorCodes.BAD_REQUEST, 

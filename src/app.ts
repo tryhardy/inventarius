@@ -47,8 +47,17 @@ async function start() {
         mongoClient.connect().then((obj) => {
             console.log('Connected to database MongoDB');
         }).catch((error) => {
-            console.error('ERROR:', error.message);
-        });        
+            console.error('ERROR:', error.message); 
+        });
+
+        // Таблицы, используемые на проекте, сами создаются
+        // Если такая таблица уже есть, она обновляется
+        db.sync({
+            alter: true
+        }).then(()=>{
+            console.log("Tables have been created");
+        }).catch(err=>console.log(err));
+        
 
         // Start our application
         app.listen(port);
