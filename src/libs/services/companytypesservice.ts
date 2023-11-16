@@ -1,8 +1,8 @@
-import { ICompanyTypes } from "../interfaces/company/icompanytypes";
+import { ICompanyTypes } from "../interfaces/company/icompany_types";
 import { CompanyTypesModel } from "../models/company_types";
 import { Service } from "./service";
 
-export class CompanyTypesService  extends Service
+export class CompanyTypesService extends Service
 {
     model;
 
@@ -18,7 +18,9 @@ export class CompanyTypesService  extends Service
             where: {}
         };
 
-        if (type) query.where['code'] = type;
+        if (type) {
+            query.where['code'] = type;
+        }
 
         return await this.model.findOne(query);
     }

@@ -1,6 +1,6 @@
 import { ICompanyCreate } from "../libs/interfaces/company/icompany";
-import { ICompanyWorkerCreate } from "../libs/interfaces/company/icompanyworker";
-import { IEnumCompanyType } from "../libs/interfaces/enums/enum-company-type";
+import { ICompanyWorkerCreate } from "../libs/interfaces/company/icompany_worker";
+import { IEnumCompanyType } from "../libs/interfaces/enums/enum_company_type";
 
 export function checkPassword(value, { req, location, path }) : any
 {

@@ -1,14 +1,20 @@
 import express from 'express';
-import { ISuccess } from '../libs/interfaces/answers/isuccess';
-import { UserValidationSimple } from '../validation/usercreate';
+
 import { AppError } from '../libs/classes/error';
-import { ErrorCodes } from '../libs/interfaces/enums/error-codes';
+import { ISuccess } from '../libs/interfaces/answers/isuccess';
+
+import { UserValidationSimple } from '../validation/usercreate';
 import { Validation } from '../libs/classes/validation';
+
+import { ErrorCodes } from '../libs/interfaces/enums/error_codes';
 import { IUserCreateBase } from '../libs/interfaces/user/iuser';
+
 import { CompanyTypesService } from '../libs/services/companytypesservice';
 import { UsersService } from '../libs/services/userservice';
+import { CompaniesModel } from '../libs/models/companies';
 
 const router = express.Router();
+const usersService = new UsersService();
 
 let status = 200;
 let result : ISuccess = {
@@ -25,8 +31,8 @@ let result : ISuccess = {
  */
 router.get('/user', async (req, res, next) => {
 
-    //const result = await Users.findAll({})
-
+    const result = await usersService.get({});
+    
     res.status(status);
     res.send(result);
 });

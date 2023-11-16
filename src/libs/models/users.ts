@@ -1,54 +1,66 @@
-import { DataTypes } from 'sequelize';
-import db from '../../db';
-import { PGModelOptions } from '../../options/pg-model-option';
+import { DataTypes, Model } from 'sequelize';
+import { ModelOptions } from '../classes/model_options';
+import { UserGroupsModel, UserGroupsSchema } from './user_groups';
+import { v4 as uuidv4} from 'uuid';
+import { IUser } from '../interfaces/user/iuser';
+import { IEnumUserGroups } from '../interfaces/enums/enum_user_groups';
 
-const UserSchema = {
-    id: {
-      type: DataTypes.UUID,
-      primaryKey: true,
-      autoIncrement: true,
-      allowNull: false
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      length: 256
-    },
-    last_name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      length: 256
-    },
-    email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        length: 256
-    },
-    password: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        length: 256
-    },
-    active: {
-        type: DataTypes.BOOLEAN,
-        default: false
-    },
-    group_id: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        default: null
-    },
-    date_login: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        default: DataTypes.NOW
-    }
+const options = new ModelOptions('users');
+
+class UsersModel extends Model implements IUser
+{
+    group_id: IEnumUserGroups;
+    id: string;
+    name: string;
+    last_name: string;
+    email: string;
+    password: string;
+    date_create: Date;
+    date_update: Date;
+    code: IEnumUserGroups;
 }
 
-export const UsersModel = db.define(
-    'users',
-    UserSchema,
-    PGModelOptions
-)
+const UsersSchema = UsersModel.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: uuidv4(),
+            primaryKey: true,
+            allowNull: false
+        },
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        last_name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        email: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true
+        },
+        password: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        active: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        date_login: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: new Date()
+        },
+    }, 
+    options
+);
 
-module.exports.UsersModel = UsersModel
+UserGroupsSchema.hasMany(UsersSchema, {
+    foreignKey: 'group_id',
+    keyType: DataTypes.UUID,
+});
+
+export { UsersSchema, UsersModel }

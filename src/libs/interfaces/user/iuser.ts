@@ -1,7 +1,7 @@
 import { ICompany, ICompanyCreate } from "../company/icompany";
 import { Dates, ID } from "../common";
-import { ICompanyWorkerUpdate } from "../company/icompanyworker";
-import { IEnumUserGroups } from "../enums/enum-user-groups";
+import { ICompanyWorkerUpdate } from "../company/icompany_worker";
+import { IEnumUserGroups } from "../enums/enum_user_groups";
 
 //Интерфейс таблицы со списком пользователей
 export interface IUser extends ID, Dates {
@@ -9,6 +9,7 @@ export interface IUser extends ID, Dates {
     last_name : string,
     email: string,
     password: string,
+    group_id: IEnumUserGroups
 }
 
 //Интерфейс таблицы со списком ролей пользователей. По умолчанию новому пользователю присваивается роль "client"

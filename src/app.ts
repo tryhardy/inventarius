@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { createServer } from 'http';
-import { mongoClient } from './options/mongo';
+import { mongoClient } from './config/mongo';
 import db from './db';
 import 'winston-mongodb';
 import 'dotenv/config';
@@ -48,7 +48,7 @@ async function start() {
             console.log('Connected to database MongoDB');
         }).catch((error) => {
             console.error('ERROR:', error.message);
-        });
+        });        
 
         // Start our application
         app.listen(port);

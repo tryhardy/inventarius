@@ -1,44 +1,59 @@
-import { DataTypes } from 'sequelize';
-import db from '../../db';
-import { PGModelOptions } from '../../options/pg-model-option';
+import { CompanyTypesModel, CompanyTypesSchema } from './company_types';
+import { UsersModel, UsersSchema } from './users';
 
-const CompanySchema = {
-    id: {
-      type: DataTypes.UUID,
-      primaryKey: true,
-      autoIncrement: true,
-      allowNull: false
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      length: 256
-    },
-    address: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      length: 256
-    },
-    active: {
-        type: DataTypes.BOOLEAN,
-        default: false
-    },
-    creator: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        default: null
-    },
-    date_login: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        default: DataTypes.NOW
-    }
+import { DataTypes, Model } from 'sequelize';
+import { ModelOptions } from '../classes/model_options';
+import { v4 as uuidv4} from 'uuid';
+import { ICompany } from '../interfaces/company/icompany';
+import { IEnumCompanyType } from '../interfaces/enums/enum_company_type';
+
+const options = new ModelOptions('companies');
+
+class CompaniesModel extends Model implements ICompany
+{
+    type_id: IEnumCompanyType;
+    name?: string;
+    active: boolean;
+    address?: string;
+    creator: string;
+    id: string;
+    date_create: Date;
+    date_update: Date;
+
 }
 
-export const CompaniesModel = db.define(
-    'companies',
-    CompanySchema,
-    PGModelOptions
-)
+const CompaniesSchema = CompaniesModel.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: uuidv4(),
+            primaryKey: true,
+            allowNull: false
+        },
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        address: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        active: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true
+        },
+    }, 
+    options
+);
 
-module.exports.CompaniesModel = CompaniesModel
+CompanyTypesSchema.hasMany(CompaniesSchema, {
+    foreignKey: 'type_id',
+    keyType: DataTypes.UUID
+});
+
+UsersSchema.hasMany(CompaniesSchema, {
+    foreignKey: 'creator',
+    keyType: DataTypes.UUID
+});
+
+export { CompaniesModel, CompaniesSchema }

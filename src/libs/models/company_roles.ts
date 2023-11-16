@@ -1,25 +1,33 @@
-import { DataTypes } from 'sequelize';
-import db from '../../db';
-import { PGModelOptions } from '../../options/pg-model-option';
+import { DataTypes, Model, Sequelize } from 'sequelize';
+import { ModelOptions } from '../classes/model_options';
+import { v4 as uuidv4 } from 'uuid';
+import { ICompanyRoles } from '../interfaces/company/icompany_roles';
+import { IEnumCompanyRole } from '../interfaces/enums/enum_company_role';
 
-const CompanyRolesSchema = {
-  id: {
-    type: DataTypes.UUID,
-    primaryKey: true,
-    autoIncrement: true,
-    allowNull: false
-  },
-  code: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    length: 256
-  },
+const options = new ModelOptions('company_roles');
+
+class CompanyRolesModel extends Model implements ICompanyRoles
+{
+  date_create: Date;
+  date_update: Date;
+  code: IEnumCompanyRole;
+  id: string;
 }
 
-export const CompanyRolesModel = db.define(
-  'company_roles',
-  CompanyRolesSchema,
-  PGModelOptions
-)
+const CompanyRolesSchema = CompanyRolesModel.init({
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: uuidv4(),
+      primaryKey: true,
+      allowNull: false
+    },
+    code: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true
+    },
+  }, 
+  options
+);
 
-module.exports.CompanyRolesModel = CompanyRolesModel
+export { CompanyRolesModel, CompanyRolesSchema }

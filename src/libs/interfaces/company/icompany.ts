@@ -1,4 +1,4 @@
-import { IEnumCompanyType } from "../enums/enum-company-type"
+import { IEnumCompanyType } from "../enums/enum_company_type"
 import { Dates, ID } from "../common"
 
 //Интерфейс таблицы со списком компаний

@@ -1,5 +1,5 @@
 import { IError } from "../libs/interfaces/answers/ierror";
-import { ErrorCodes } from "../libs/interfaces/enums/error-codes";
+import { ErrorCodes } from "../libs/interfaces/enums/error_codes";
 import { AppError } from "../libs/classes/error";
 
 /**

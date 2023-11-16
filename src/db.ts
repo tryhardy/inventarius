@@ -10,4 +10,4 @@ export default new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, proce
     acquire: 3000,
     idle: 10000
   }
-})
+});

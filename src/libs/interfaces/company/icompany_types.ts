@@ -1,4 +1,4 @@
-import { IEnumCompanyType } from "../enums/enum-company-type";
+import { IEnumCompanyType } from "../enums/enum_company_type";
 import { Dates, ID } from "../common"
 
 export const CREATOR_COMPANY_TYPE = IEnumCompanyType.company;
