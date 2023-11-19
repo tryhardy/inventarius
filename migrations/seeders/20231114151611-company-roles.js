@@ -8,21 +8,20 @@ const table = 'company_roles';
 module.exports = {
   async up (queryInterface, Sequelize) {
 
-    await queryInterface.insert(table, {
-        id: uuid.v4(),
-        code: 'admin',
-        date_create: new Date(),
-        date_update: new Date()
-      }, 
-      {}
-    );
-    
-    await queryInterface.insert(table, {
-        id: uuid.v4(),
-        code: 'worker',
-        date_create: new Date(),
-        date_update: new Date()
-      }, 
+    await queryInterface.bulkInsert(table, [
+        {
+          id: uuid.v4(),
+          code: 'admin',
+          date_create: new Date(),
+          date_update: new Date()
+        },
+        {
+          id: uuid.v4(),
+          code: 'worker',
+          date_create: new Date(),
+          date_update: new Date()
+        },
+      ], 
       {}
     );
   },

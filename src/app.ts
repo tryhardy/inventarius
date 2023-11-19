@@ -1,9 +1,10 @@
 import * as express from 'express';
 import { createServer } from 'http';
 import { mongoClient } from './config/mongo';
-import db from './db';
+import db from './config/db';
 import 'winston-mongodb';
 import 'dotenv/config';
+import { Container, ERROR_MIDDLEWARE, attachControllers } from '@decorators/express';
 
 const app = express.default();
 const server = createServer(app);
@@ -12,34 +13,47 @@ const port = process.env.PORT || 3000;
 // Postgres connect
 db.authenticate().catch(error => console.error(error))
 
-// Import routes
-import routIndex from './routes/index';
-import routUser from './routes/user';
-
 // Import middlewares
-import { routLogger, errorRoutLogger } from './middleware/loggers';
-import { setDefaultError, setError } from './middleware/errors';
+import { LoggerMiddleware } from './middleware/loggers';
+import { DefaultMiddleware } from './middleware/errors';
 
-app.use(express.json())
+// Import Controllers
+import { UsersController } from './controllers/users_controller';
+import { DefaultController } from './controllers/default_controller';
 
-// Use routes
+const router = express.Router();
+const defaultRouter = express.Router();
 
-// Logging all requests
-app.use(routLogger);
+//Парсим данные из request
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Path to files storage for public usage
+// Логируем все входящие запросы к АПИ
+app.use(LoggerMiddleware.getRoutLogger);
+
+// Путь к хранилищу файлов для публичного использования
 app.use(express.static("public"));
 
-// Api routes
-app.use('/api', routIndex);
-app.use('/api', routUser);
+app.use('/api/', router);
+app.use('', defaultRouter);
 
-// Error handlers
-app.use(setDefaultError) // Default error code - 404
-app.use(setError);
+// Роуты к апи текущей версии
+attachControllers(router, [
+    UsersController,
+]);
 
-// Log request result errors
-app.use(errorRoutLogger);
+// Если ни один из роутов не подошел, тогда устанавливаем по умолчанию ошибку 404
+attachControllers(defaultRouter, [
+    DefaultController 
+]);
+
+Container.provide([
+    { 
+        //Обработка (приведение в единообразный вид) и логирование ошибок
+        provide: ERROR_MIDDLEWARE, 
+        useValue: DefaultMiddleware.setError
+    },
+]);  
 
 async function start() {
     try {
@@ -52,11 +66,11 @@ async function start() {
 
         // Таблицы, используемые на проекте, сами создаются
         // Если такая таблица уже есть, она обновляется
-        db.sync({
-            alter: true
-        }).then(()=>{
-            console.log("Tables have been created");
-        }).catch(err=>console.log(err));
+        // db.sync({
+        //     alter: true
+        // }).then(()=>{
+        //     console.log("Tables have been created");
+        // }).catch(err=>console.log(err));
         
 
         // Start our application

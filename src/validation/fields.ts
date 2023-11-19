@@ -1,8 +1,13 @@
 import { checkPassword, isCompanyObject, isWorkerObject } from "./functions"
 
+/**
+ * Универсальные значения для валидации
+ * входящих параметров
+ */
+
 export const required = {
     bail: true,
-    errorMessage: 'Значение #FIELD# не указано',
+    errorMessage: 'Значение параметра #FIELD# не указано',
 }
 
 export const isLength = {
@@ -11,7 +16,7 @@ export const isLength = {
         max: 256
     },
     bail: true,
-    errorMessage: 'Допустимая длина строки: от 2 до 256 символов'
+    errorMessage: 'Допустимая параметра #FIELD#: от 2 до 256 символов'
 }
 
 export const isLengthPassword = {
@@ -49,6 +54,6 @@ export const checkWorker = {
     notEmpty: required,
     custom: { 
         options: isWorkerObject,
-        errorMessage: 'В поле worker переданы не все необходимые данные'
+        errorMessage: 'В поле #FIELD# переданы не все необходимые данные'
     },
 }

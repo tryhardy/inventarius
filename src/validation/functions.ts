@@ -1,7 +1,15 @@
-import { ICompanyCreate } from "../libs/interfaces/company/icompany";
-import { ICompanyWorkerCreate } from "../libs/interfaces/company/icompany_worker";
-import { IEnumCompanyType } from "../libs/interfaces/enums/enum_company_type";
+import { IEnumCompanyType } from "../enums/enum_company_type";
+import { ICompanyCreate } from "../interfaces/models/companies/icompany_create";
+import { IWorkerCreate } from "../interfaces/models/workers/iworker_create";
 
+/**
+ * Кастомные функции валидации
+ * @param value 
+ * @param param1 
+ * @returns 
+ */
+
+//Совпадает ли поле password c check_password?
 export function checkPassword(value, { req, location, path }) : any
 {
     let params = req[location];
@@ -13,6 +21,8 @@ export function checkPassword(value, { req, location, path }) : any
     return true;
 }
 
+//Проверка для регистрации нового пользователя с привязкой к компании
+//Передаем ли мы тип компании при регистрации?
 export function isCompanyObject(value : ICompanyCreate, { req, location, path }) : boolean
 {
     if (!value) return false;
@@ -21,7 +31,9 @@ export function isCompanyObject(value : ICompanyCreate, { req, location, path })
     return true;
 }
 
-export function isWorkerObject(value : ICompanyWorkerCreate, { req, location, path }) : boolean
+//Проверка для регистрации нового пользователя по приглашению
+//Передаем ли мы данные о работнике при регистрации?
+export function isWorkerObject(value : IWorkerCreate, { req, location, path }) : boolean
 {
     if (!value) return false;
     if (!value.name) return false;
