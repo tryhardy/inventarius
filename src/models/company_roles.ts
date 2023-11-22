@@ -17,7 +17,7 @@ class CompanyRolesModel extends Model implements IWorkerRoles
 const CompanyRolesSchema = CompanyRolesModel.init({
     id: {
       type: DataTypes.UUID,
-      defaultValue: uuidv4(),
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
       allowNull: false
     },

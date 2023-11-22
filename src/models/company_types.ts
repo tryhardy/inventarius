@@ -17,7 +17,7 @@ class CompanyTypesModel extends Model implements ICompanyType
 const CompanyTypesSchema = CompanyTypesModel.init({
     id: {
       type: DataTypes.UUID,
-      defaultValue: uuidv4(),
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
       allowNull: false
     },

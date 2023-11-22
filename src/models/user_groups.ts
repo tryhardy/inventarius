@@ -8,16 +8,16 @@ const options = new ModelOptions('user_groups');
 
 class UserGroupsModel extends Model implements IUserGroups
 {
+  id: string;
+  code: IEnumUserGroups;
   date_create: Date;
   date_update: Date;
-  code: IEnumUserGroups;
-  id: string;
 }
 
 const UserGroupsSchema = UserGroupsModel.init({
   id: {
     type: DataTypes.UUID,
-    defaultValue: uuidv4(),
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
     allowNull: false,
   },

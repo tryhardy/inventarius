@@ -23,7 +23,7 @@ export class CompaniesService extends Service<CompaniesModel>
 
             let data : ICompanyCreateDTO = {
                 type_id: currentCompanyType.id,
-                active: false,
+                active: true,
                 creator: params.creator
             }
 

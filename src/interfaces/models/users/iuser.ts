@@ -6,5 +6,6 @@ export interface IUser extends IID, IDates {
     last_name : string,
     email: string,
     password: string,
-    group_id: string
+    group_id: string,
+    salt: string
 }

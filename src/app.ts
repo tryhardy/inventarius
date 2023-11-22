@@ -20,6 +20,7 @@ import { DefaultMiddleware } from './middleware/errors';
 // Import Controllers
 import { UsersController } from './controllers/users_controller';
 import { DefaultController } from './controllers/default_controller';
+import { AuthController } from './controllers/auth_controller';
 
 const router = express.Router();
 const defaultRouter = express.Router();
@@ -39,6 +40,7 @@ app.use('', defaultRouter);
 
 // Роуты к апи текущей версии
 attachControllers(router, [
+    AuthController,
     UsersController,
 ]);
 
@@ -69,7 +71,7 @@ async function start() {
         // db.sync({
         //     alter: true
         // }).then(()=>{
-        //     console.log("Tables have been created");
+        //     console.log("Tables have been created or updated");
         // }).catch(err=>console.log(err));
         
 

@@ -4,6 +4,8 @@ export interface IUserFilter {
     last_name ?: string,
     email ?: string,
     active ?: boolean,
-    date_login ?: string,
-    group ?: string
+    group ?: string,
+
+    limit ?: number,
+    page ?: number
 }

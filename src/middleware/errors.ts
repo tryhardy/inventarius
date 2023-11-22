@@ -42,7 +42,7 @@ export class DefaultMiddleware implements Middleware
         let message;
         let data;
         let error;
-    
+
         if (err instanceof AppError) {
             switch (err.code) {
                 //Ошибка выполнения запроса
@@ -101,14 +101,16 @@ export class DefaultMiddleware implements Middleware
         //Ошибка выглядит так если она возникла в процессе обращения к БД
         if (errors && errors.length > 0) {
             
-            let messages = {};
+            let messages = {
+                errors: {}
+            };
     
             errors.forEach((item, i) => {
-                if (messages[item.path]) {
-                    messages[item.path].push(item.message);
+                if (messages.errors[item.path]) {
+                    messages.errors[item.path].push(item.message);
                 }
                 else {
-                    messages[item.path] = [
+                    messages.errors[item.path] = [
                         item.message
                     ];
                 }
@@ -117,7 +119,9 @@ export class DefaultMiddleware implements Middleware
             result = messages;
         }
         else {
-            result = error.message;
+            result = {
+                error: error.message
+            };
         }
     
         if (!status) status = ErrorCodes.BAD_REQUEST;

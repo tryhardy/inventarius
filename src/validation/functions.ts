@@ -9,33 +9,17 @@ import { IWorkerCreate } from "../interfaces/models/workers/iworker_create";
  * @returns 
  */
 
-//Совпадает ли поле password c check_password?
-export function checkPassword(value, { req, location, path }) : any
-{
-    let params = req[location];
-
-    if (!params.password) return false;
-    if (!value) return false;
-    if (params.password != value) return false;
-    
-    return true;
-}
-
 //Проверка для регистрации нового пользователя с привязкой к компании
 //Передаем ли мы тип компании при регистрации?
-export function isCompanyObject(value : ICompanyCreate, { req, location, path }) : boolean
+export function companyValidator(value : ICompanyCreate, helper)
 {
-    if (!value) return false;
-    if (!value.type) return false;
-    if (!IEnumCompanyType[value.type]) return false;
-    return true;
-}
+    if (!Object(value) || !value) {
+        return helper.message('Provided value is not a company object');
+    }
 
-//Проверка для регистрации нового пользователя по приглашению
-//Передаем ли мы данные о работнике при регистрации?
-export function isWorkerObject(value : IWorkerCreate, { req, location, path }) : boolean
-{
-    if (!value) return false;
-    if (!value.name) return false;
+    if (!value.type || !IEnumCompanyType[value.type]) {
+        return helper.message('Company type not provided');
+    }
+
     return true;
 }

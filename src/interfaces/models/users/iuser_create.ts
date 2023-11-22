@@ -10,5 +10,4 @@ export interface IUserCreate {
     confirm_password: string,
     group_id ?: string,
     company ?: ICompanyCreate,      //С созданием новой компании
-    worker ?: IWorkerUpdate, //Если создаем через приглас
 }

@@ -21,7 +21,14 @@ export function ValidationMiddleware(schema: ObjectSchema, type: string)
                 const { error } = schema.validate(req[type]);
     
                 if (error) {
-                    throw new AppError(IEnumErrorCodes.VALIDATION_ERROR, 'Validation error', error.details)
+                    let messages = {
+                        errors: {}
+                    };
+                    error.details.forEach((detail, index, details) => {
+                        if (!messages.errors[detail.path[index]]) messages.errors[detail.path[index]] = [];
+                        messages.errors[detail.path[index]].push(detail.message);
+                    });
+                    throw new AppError(IEnumErrorCodes.VALIDATION_ERROR, 'Validation error', messages)
                 }
     
                 next();

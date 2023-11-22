@@ -38,7 +38,15 @@ export class WorkersService extends Service<WorkersModel>
                 is_owner: params.is_owner
             }
 
-            return await this.model.create(data);
+            let result = await this.model.create(data);
+
+            if (result) {
+                console.log(result)
+                return result;
+            }
+            else {
+                throw new Error('Worker does not created');
+            }
         }
         finally {}
     }
