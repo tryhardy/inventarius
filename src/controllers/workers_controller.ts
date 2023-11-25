@@ -63,6 +63,9 @@ export class WorkersController
             let isClient = Roles.isClient(group);
 
             if (isClient) {
+                if (params.company_id) delete params.company_id;
+                if (params.user_id) delete params.user_id
+
                 let isOwnerOrAdmin = await workerService.findOwnerOrAdmin({
                     company_id: company_id,
                     user_id: user_id

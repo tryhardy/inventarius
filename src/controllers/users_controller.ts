@@ -61,7 +61,7 @@ export class UsersController
      */
     @GuardAuthMiddleware()
     @Get('/:id')
-    async get(@Response() res, @Req(AUTH_DATA_FIELD) auth_data, @Params('id') id : string, @Next() next: NextFunction) 
+    async getById(@Response() res, @Req(AUTH_DATA_FIELD) auth_data, @Params('id') id : string, @Next() next: NextFunction) 
     {
         let errorMessage = 'User not found';
 

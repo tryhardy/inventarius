@@ -11,5 +11,6 @@ export const userCreateSchema = Joi.object({}).keys({
         'any.only': '{{#label}} does not match' 
     }),
     company: Joi.object().custom(companyValidator),
-    group: Joi.string()
+    group: Joi.string(),
+    active: Joi.boolean()
 })

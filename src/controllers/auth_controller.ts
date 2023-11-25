@@ -89,6 +89,9 @@ export class AuthController
     async signup(@Res() res, @Body() params : IUserCreate, @Next() next: NextFunction) 
     {
         try {
+            if (params.active != undefined) delete params.active
+            if (params.group != undefined) delete params.group
+
             let errorTypeCompanyMessage = 'Company type not provided';
             let errorCreateCompanyMessage = 'Company was not created';
             let errorCreateWorkerMessage = 'Worker was not created';
@@ -172,6 +175,9 @@ export class AuthController
     @Post('/signup/:hash')
     async signupByHash(@Res() res, @Body() params : IUserCreate, @Params('hash') hash : string, @Next() next: NextFunction) 
     {
+        if (params.active != undefined) delete params.active
+        if (params.group != undefined) delete params.group
+
         let errorCreateUserMessage = 'User was not created!';
         let errorWorkerFindMessage = 'Worker not found or has been already invited';
 

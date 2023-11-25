@@ -9,4 +9,5 @@ export interface IUserCreate {
     confirm_password: string,
     group ?: string,
     company ?: ICompanyCreate,      //С созданием новой компании
+    active ?: boolean
 }

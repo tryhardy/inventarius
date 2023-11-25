@@ -228,6 +228,9 @@ export class CompaniesController
 
             //Если пользователь с ролью "Клиент"
             if (auth_data.group == IEnumUserGroups.client) {
+
+                if (params.creator) delete params.creator;
+                
                 //Ищем есть ли такой работник в компании
                 let workerService = new WorkersService;
                 let isCompanyWorkerOrCreator = await workerService.findOne({
