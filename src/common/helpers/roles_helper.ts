@@ -1,6 +1,6 @@
-import { IEnumUserGroups } from "../enums/enum_user_groups";
+import { IEnumUserGroups } from "../../enums/enum_user_groups";
 
-export class Roles 
+export class RolesHelper
 {
     static isClient(role)
     {

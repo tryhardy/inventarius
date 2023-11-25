@@ -18,7 +18,7 @@ import { GuardAuthMiddleware } from "../middleware/guard_auth";
 import { IEnumUserGroups } from "../enums/enum_user_groups";
 import { IWorkerFilter } from "../interfaces/controllers/workers/iworker_filter";
 import { IEnumCompanyRole } from "../enums/enum_company_role";
-import { Roles } from "../common/roles";
+import { RolesHelper as Roles } from "../common/helpers/roles_helper";
 import { emailSchema } from "../validation/schemas/email_schema";
 import { IEmailData } from "../interfaces/controllers/auth/iemail_data";
 import { UsersService } from "../services/users_service";
@@ -175,25 +175,23 @@ export class WorkersController
                 role_id : roleResult.id,
                 is_owner: false
             }
-            //TODO генерируем ссылку инвайт, если в параметрах передается почта
+
             let worker = await (new WorkersService).create(workerDTO);
 
             if (!worker || !worker.id) {
                 throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorWorkerMessage);
             }
 
-            //Если передается емайл - генерируем ссылку-приглашение
             let result;
-            let token;
-            if (params.email) {
-                token = WorkersHelper.invite(params.email, company_id, worker.id);
-            }
 
             result.company_id = company_id;
             result.worker = worker;
 
-            if (token) {
-                result.invite_token = token;
+            //Если передается емайл - генерируем ссылку-приглашение
+            let token;
+            if (params.email) {
+                token = WorkersHelper.invite(params.email, company_id, worker.id);
+                if (token) result.invite_token = token;
             }
 
             res.send(new AppSuccess(result, successMessage));

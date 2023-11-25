@@ -15,8 +15,7 @@ import { IAuthData } from "../interfaces/controllers/auth/iauth_data";
 import { IUserCreate } from "../interfaces/controllers/user/iuser_create";
 import { userCreateSchema } from "../validation/schemas/user_create_schema";
 import { IEmailData } from "../interfaces/controllers/auth/iemail_data";
-import { GuardAuthMiddleware } from "../middleware/guard_auth";
-import { AUTH_DATA_FIELD, JWT_INVITE_WORKER_SECRET } from "../common/constants";
+import { JWT_CHANGE_PASSWORD_SECRET, JWT_CONFIRM_EMAIL_SECRET, JWT_INVITE_WORKER_SECRET, JWT_TIME_CHANGE_PASSWORD_SECRET, JWT_TIME_CONFIRM_EMAIL_SECRET } from "../common/constants";
 import { emailSchema } from "../validation/schemas/email_schema";
 import { IForgotPasswordResult } from "../interfaces/controllers/auth/iforgot_password_result";
 import { changePasswordSchema } from "../validation/schemas/change_password_schema";
@@ -29,13 +28,12 @@ import { CompaniesService } from "../services/companies_service";
 import { IWorkerCreateDTO } from "../interfaces/dto/iworker_create_dto";
 import { WorkersService } from "../services/workers_service";
 import { debug } from "../app";
-import { Roles } from "../common/roles";
 
 @Controller('/auth')
 export class AuthController
 {
-    changePasswordSecret = 'change_password';
-    confirmRegisterSecret = 'confirm_register';
+    changePasswordSecret = JWT_CHANGE_PASSWORD_SECRET;
+    confirmRegisterSecret = JWT_CONFIRM_EMAIL_SECRET;
     status = IEnumSuccessCodes.SUCCESS;
 
     /**
@@ -172,7 +170,7 @@ export class AuthController
      */
     @ValidationMiddleware(userCreateSchema, IEnumValidationTypes.body)
     @Post('/signup/:hash')
-    async signupByHash(@Response() res, @Body() params : IUserCreate, @Params('hash') hash : string, @Next() next: NextFunction) 
+    async signupByHash(@Res() res, @Body() params : IUserCreate, @Params('hash') hash : string, @Next() next: NextFunction) 
     {
         let errorCreateUserMessage = 'User was not created!';
         let errorWorkerFindMessage = 'Worker not found or has been already invited';
@@ -209,7 +207,7 @@ export class AuthController
             //TODO SEND EMAIL Генерируем токен для подтверждения EMAIL и отправляем на почту ссылку
             let token = JWT.generateAccessToken(
                 {id: user.id},
-                360000,
+                JWT_TIME_CONFIRM_EMAIL_SECRET,
                 this.confirmRegisterSecret
             );
 
@@ -231,7 +229,7 @@ export class AuthController
      * После перехода по этой ссылке, пользователь становится активным
      */
     @Post('/confirm/:hash')
-    async confirmEmail(@Response() res, @Params('hash') hash : string, @Next() next: NextFunction) 
+    async confirmEmail(@Res() res, @Params('hash') hash : string, @Next() next: NextFunction) 
     {
         let successMessage = 'Email was confirmed';
         let errorUpdateUserMessage = 'User not updated';
@@ -286,7 +284,7 @@ export class AuthController
      */
     @ValidationMiddleware(emailSchema, IEnumValidationTypes.body)
     @Post('/forgot_password')
-    async forgot_password(@Response() res, @Body() params : IEmailData, @Next() next: NextFunction)
+    async forgot_password(@Res() res, @Body() params : IEmailData, @Next() next: NextFunction)
     {
         let resultMessage = 'Сообщение о смене пароля будет направлено на почту, если такой пользователь существует';
         let result;
@@ -300,7 +298,7 @@ export class AuthController
                 {
                     id: user.id
                 },
-                86400,
+                JWT_TIME_CHANGE_PASSWORD_SECRET,
                 this.changePasswordSecret
             );
 
@@ -324,7 +322,7 @@ export class AuthController
      */
     @ValidationMiddleware(changePasswordSchema, IEnumValidationTypes.body)
     @Post('/change_password/:hash')
-    async change_password(@Response() res, @Body() body : IPasswordData, @Params('hash') hash : string, @Next() next: NextFunction)
+    async change_password(@Res() res, @Body() body : IPasswordData, @Params('hash') hash : string, @Next() next: NextFunction)
     {
         let successMessage = 'Password was changed';
         let errorMessage = 'Wrong hash data provided';
