@@ -21,7 +21,7 @@ const HashSchema = HashModel.init({
     allowNull: false,
   },
   hash: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false,
     unique: true
   },

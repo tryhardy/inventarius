@@ -16,7 +16,7 @@ import { IUserCreate } from "../interfaces/controllers/user/iuser_create";
 import { userCreateSchema } from "../validation/schemas/user_create_schema";
 import { IEmailData } from "../interfaces/controllers/auth/iemail_data";
 import { GuardAuthMiddleware } from "../middleware/guard_auth";
-import { AUTH_DATA_FIELD } from "../common/constants";
+import { AUTH_DATA_FIELD, JWT_INVITE_WORKER_SECRET } from "../common/constants";
 import { emailSchema } from "../validation/schemas/email_schema";
 import { IForgotPasswordResult } from "../interfaces/controllers/auth/iforgot_password_result";
 import { changePasswordSchema } from "../validation/schemas/change_password_schema";
@@ -29,6 +29,7 @@ import { CompaniesService } from "../services/companies_service";
 import { IWorkerCreateDTO } from "../interfaces/dto/iworker_create_dto";
 import { WorkersService } from "../services/workers_service";
 import { debug } from "../app";
+import { Roles } from "../common/roles";
 
 @Controller('/auth')
 export class AuthController
@@ -166,17 +167,62 @@ export class AuthController
         }
     }
 
-    //TODO ROUT создать ссылку-приглашение по хэшу
-
     /**
      * Создать нового пользователя по хэшу с привязкой к ранее созданной компании
-     * Создаем юзера и привязываем его к ранее созданному работнику
      */
     @ValidationMiddleware(userCreateSchema, IEnumValidationTypes.body)
     @Post('/signup/:hash')
-    async createByHash(@Response() res, @Body() params : IUserCreate, @Params('hash') hash : string, @Next() next: NextFunction) 
+    async signupByHash(@Response() res, @Body() params : IUserCreate, @Params('hash') hash : string, @Next() next: NextFunction) 
     {
-        res.send(hash);
+        let errorCreateUserMessage = 'User was not created!';
+        let errorWorkerFindMessage = 'Worker not found or has been already invited';
+
+        try {
+            let workerService = new WorkersService;
+            let hashService = new HashService;
+            let userService = new UsersService;
+            let result;
+
+            //Парсим hash в массив (если такой хеш уже был использован, возвращаем ошибку)
+            let data = await hashService.verify(hash, JWT_INVITE_WORKER_SECRET);
+            let hashData = data.data;
+
+            //Проверяем, есть ли такой работник в базе (а еще проверяем, привязан ли к нему реальный пользователь)
+            let worker = await workerService.findOne({id: hashData.worker_id, user_id: null, active: true});
+
+            if (!worker || worker.id) {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorWorkerFindMessage)
+            }
+
+            //Создаем пользователя
+            let user = await userService.create(params);
+            if (user) {
+                result.user = await userService.getById(user.id);
+            }
+            else {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorCreateUserMessage)
+            }
+
+            await worker.update({user_id: user.id});
+            result.worker = worker;
+
+            //TODO SEND EMAIL Генерируем токен для подтверждения EMAIL и отправляем на почту ссылку
+            let token = JWT.generateAccessToken(
+                {id: user.id},
+                360000,
+                this.confirmRegisterSecret
+            );
+
+            //Если включен DEBUG, возвращаем в запросе код токена для подтверждения EMAIL
+            if (debug) {
+                result.token = token;
+            }
+
+            res.send(new AppSuccess(result));
+        }
+        catch(error) {
+            next(error)
+        }
     }
 
     /**
@@ -196,7 +242,7 @@ export class AuthController
             let hashService = new HashService;
             let userService = new UsersService;
 
-            //Парсим hash в массив
+            //Парсим hash в массив (если такой хеш уже был использован, возвращаем ошибку)
             let hashData = await hashService.verify(hash, this.confirmRegisterSecret);
 
             //Записываем хеш в базу, чтобы его нельзя было повторно использовать
@@ -240,7 +286,7 @@ export class AuthController
      */
     @ValidationMiddleware(emailSchema, IEnumValidationTypes.body)
     @Post('/forgot_password')
-    async forgot_password(@Response() res, @Req(AUTH_DATA_FIELD) auth_data, @Body() params : IEmailData, @Next() next: NextFunction)
+    async forgot_password(@Response() res, @Body() params : IEmailData, @Next() next: NextFunction)
     {
         let resultMessage = 'Сообщение о смене пароля будет направлено на почту, если такой пользователь существует';
         let result;
@@ -261,8 +307,8 @@ export class AuthController
             //TODO SEND EMAIL отправляем на почту
             let send = false;
 
-            //Если смену пароля запрашивает менеджер или админ, отдаем в ответе сразу хэш (для тестирования)
-            if (auth_data && debug === true) {
+            //Если приложение работает в режиме тестирования, отдаем в ответе хэш
+            if (debug === true) {
                 data.token = token;
                 data.send = send;
                 result = data;
@@ -278,7 +324,7 @@ export class AuthController
      */
     @ValidationMiddleware(changePasswordSchema, IEnumValidationTypes.body)
     @Post('/change_password/:hash')
-    async change_password(@Response() res, @Req(AUTH_DATA_FIELD) auth_data, @Body() body : IPasswordData, @Params('hash') hash : string, @Next() next: NextFunction)
+    async change_password(@Response() res, @Body() body : IPasswordData, @Params('hash') hash : string, @Next() next: NextFunction)
     {
         let successMessage = 'Password was changed';
         let errorMessage = 'Wrong hash data provided';

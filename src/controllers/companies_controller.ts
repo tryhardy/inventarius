@@ -264,7 +264,7 @@ export class CompaniesController
     @Delete('/:id')
     async delete(@Response() res, @Params('id') id: string, @Next() next: NextFunction)
     {
-        //TODO имеет смысл реализовать удаление через запрос в ТП?
+        //TODO может имеет смысл реализовать удаление через запрос в ТП?
         try {
             let service = new CompaniesService;
             let serviceResult = await service.delete(id);

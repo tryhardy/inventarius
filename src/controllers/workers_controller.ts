@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Next, Params, Post, Query, Req, Res } from "@decorators/express";
 import { IEnumSuccessCodes } from "../enums/success_codes";
-import { AUTH_DATA_FIELD, DEFAULT_COMPANY_ROLE } from "../common/constants";
+import { AUTH_DATA_FIELD, DEFAULT_COMPANY_ROLE, JWT_INVITE_WORKER_SECRET, JWT_TIME_JWT_INVITE_WORKER_SECRET } from "../common/constants";
 import { NextFunction } from 'express';
 import { WorkersService } from "../services/workers_service";
 import { IWorkerCreateDTO } from "../interfaces/dto/iworker_create_dto";
@@ -17,11 +17,16 @@ import { IEnumValidationTypes } from "../enums/enum_validation";
 import { GuardAuthMiddleware } from "../middleware/guard_auth";
 import { IEnumUserGroups } from "../enums/enum_user_groups";
 import { IWorkerFilter } from "../interfaces/controllers/workers/iworker_filter";
-import { CompaniesService } from "../services/companies_service";
 import { IEnumCompanyRole } from "../enums/enum_company_role";
 import { Roles } from "../common/roles";
-import { RequestAuthData } from "../interfaces/middleware/request_auth_data";
+import { emailSchema } from "../validation/schemas/email_schema";
+import { IEmailData } from "../interfaces/controllers/auth/iemail_data";
+import { UsersService } from "../services/users_service";
 import { JWT } from "../common/jwt";
+import { debug } from "../app";
+import { HashService } from "../services/hash_service";
+import { workerCreateSchema } from "../validation/schemas/worker_create_schema";
+import { WorkersHelper } from "../common/helpers/workers_helper";
 
 
 /**
@@ -30,6 +35,9 @@ import { JWT } from "../common/jwt";
 @Controller('/worker')
 export class WorkersController
 {
+    inviteWorkerSecretKey = JWT_INVITE_WORKER_SECRET;
+    inviteTokenTime = JWT_TIME_JWT_INVITE_WORKER_SECRET;
+
     status = IEnumSuccessCodes.SUCCESS;
 
     constructor() {}
@@ -118,17 +126,18 @@ export class WorkersController
         }
     }
 
-    //TODO ROUT создать работника с инвайтом
     /**
      * Создать сотрудника
      * только для авторизованных
      * Юзер с ролью "Клиент" может создать сотрудника только в своей компании, где является овнером или админом
      */
     @GuardAuthMiddleware()
+    @ValidationMiddleware(workerCreateSchema, IEnumValidationTypes.body)
     @Post('/create/:company_id')
     async create(@Res() res, @Req(AUTH_DATA_FIELD) auth_data, @Params('company_id') company_id : string, @Body() params : IWorkerCreate, @Next() next: NextFunction)
     {
         let errorNotFoundCmpanyMessage = 'Company role not found';
+        let errorWorkerMessage = 'Worker was not created';
         let successMessage = 'Worker created';
 
         try {
@@ -166,9 +175,28 @@ export class WorkersController
                 role_id : roleResult.id,
                 is_owner: false
             }
-    
+            //TODO генерируем ссылку инвайт, если в параметрах передается почта
             let worker = await (new WorkersService).create(workerDTO);
-            res.send(new AppSuccess(worker, successMessage));
+
+            if (!worker || !worker.id) {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorWorkerMessage);
+            }
+
+            //Если передается емайл - генерируем ссылку-приглашение
+            let result;
+            let token;
+            if (params.email) {
+                token = WorkersHelper.invite(params.email, company_id, worker.id);
+            }
+
+            result.company_id = company_id;
+            result.worker = worker;
+
+            if (token) {
+                result.invite_token = token;
+            }
+
+            res.send(new AppSuccess(result, successMessage));
         }
         catch(error) {
             next(error);
@@ -180,6 +208,7 @@ export class WorkersController
      * только для авторизованных
      * Юзер с группой "Клиент" может изменить сотрудника только в своей компании (где он овнер или хотя бы админ).
      * Юзер с группой "Клиент" не может изменить роль овнера компании, и активность овнера компании
+     * Юзер с группой клиент не может изменить user_id сотрудника (только выслать инвайт)
      */
     @GuardAuthMiddleware()
     @ValidationMiddleware(workerUpdateSchema, IEnumValidationTypes.body)
@@ -312,6 +341,121 @@ export class WorkersController
         }
         catch(error) {
             next(error);
+        }
+    }
+
+    /**
+     * Принять приглашение на добавление в компанию (для уже существующего пользователя)
+     * Только для авторизованных
+     * Нужно быть авторизованным под тем пользователем, которого приглашают в компанию
+     * Хеш можно использовать только один раз
+     * 
+     * @param res 
+     * @param params 
+     * @param company_id 
+     * @param worker_id 
+     * @param next 
+     */
+    @GuardAuthMiddleware()
+    @Post('/invite/confirm/:hash')
+    async confirmInvite(@Res() res, @Req(AUTH_DATA_FIELD) auth_data, @Params('hash') hash : string, @Next() next: NextFunction) 
+    {
+        try{
+            let errorMessage = 'Wrong hash data provided';
+            let workerNotFoundMessage = 'Worker not found or has been already invited';
+
+            let workerService = new WorkersService;
+            let hashService = new HashService;
+            let user = auth_data.user;
+            let user_id = user.id;
+
+            //Парсим hash в массив
+            let data = await hashService.verify(hash, this.inviteWorkerSecretKey);
+
+            if (!data) {
+                throw new AppError(IEnumErrorCodes.PERMISSION_DENIED)
+            }
+
+            //Если пользователь из инвайта и авторизованный пользователь не совпадают
+            if (user_id !== data.data.user_id) {
+                throw new AppError(IEnumErrorCodes.PERMISSION_DENIED)
+            }
+        
+            //Проверяем, есть ли такой работник в базе
+            let worker = await workerService.findOne({id: data.data.worker_id, user_id: null, active: true})
+            if (!worker || !worker.id) {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, workerNotFoundMessage)
+            }
+
+            //Записываем хеш в базу, чтобы его нельзя было повторно использовать
+            let savedHash = await hashService.save(hash);
+            //Если хэш не сохранился, тогда не позволяем сменить пароль
+            if (!savedHash || !savedHash.id) {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorMessage)
+            }
+
+            await worker.update({user_id: user_id});
+
+            res.send(new AppSuccess(worker));
+        }
+        catch(error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Инвайт на приглашение пользователя в компанию
+     * Проверяет, есть ли уже на сайте пользователь с такой почтой, и если есть, генерирует ссылку-приглашение БЕЗ регистрации нового пользователя
+     * Метод доступен только авторизованным пользователям
+     * Отправить инвайт могут пользователи с ролью в компании "admin" или овнеры компании.
+     * 
+     * @param res 
+     * @param params 
+     * @param company_id 
+     * @param worker_id 
+     * @param next 
+     */
+    @GuardAuthMiddleware()
+    @ValidationMiddleware(emailSchema, IEnumValidationTypes.body)
+    @Post('/invite/:company_id/:worker_id')
+    async invite(@Res() res, @Req(AUTH_DATA_FIELD) auth_data, @Body() params : IEmailData, @Params('company_id') company_id : string, @Params('worker_id') worker_id : string, @Next() next: NextFunction) 
+    {
+        try {
+            let group = auth_data.group;
+            let user = auth_data.user;
+            let user_id = user.id;
+            let isClient = Roles.isClient(group);
+            let workerService = (new WorkersService);
+
+            //Если пользователь с ролью "Клиент" не позволяем ему выслать инвайт
+            //Только если у этого пользователя внутри компании установлена роль "admin", или он является создателем компании
+            let isOwnerOrAdmin;
+            if (isClient) {
+                isOwnerOrAdmin = await workerService.findOwnerOrAdmin({
+                    company_id: company_id,
+                    user_id: user_id
+                });
+
+                if (!isOwnerOrAdmin || !isOwnerOrAdmin['id']) {
+                    throw new AppError(IEnumErrorCodes.PERMISSION_DENIED)
+                }
+            }
+
+            let token = WorkersHelper.invite(params.email, company_id, worker_id);
+            let result;
+
+            if (token) {
+                result = {
+                    invite_token: token
+                }
+            }
+
+            //TODO SEND EMAIL отправлять сгенерированную ссылку с хэшом на емайл пользователю
+            res.send(new AppSuccess(result, 'Invite was sended'));
+
+        }
+        catch(error) {
+            next(error)
         }
     }
 }

@@ -39,6 +39,65 @@ export class UsersService extends Service<UsersModel>
      */
     async find(params: IUserFilter = {}) : Promise<IListResult>
     {
+        let search = this.getFilter(params);
+
+        //Поиск по группе (через подзапрос ищем по коду группы, не по id)
+        let userGroupQuery : IUSerGroupsFilter = {};
+        if (params.group) {
+            userGroupQuery.code = params.group;
+        }
+
+        //Формируем пагинацию
+        let pagination = await this.getPagination(params.limit, params.page, search)
+  
+        //Получаем список юзеров с фильтром
+        let serviceResult = await this.model.findAndCountAll({
+            limit: pagination.limit,
+            offset: pagination.offset,
+            where: search,
+            include: {
+                model: UserGroupsSchema,
+                as: 'group',
+                where: userGroupQuery
+            }
+        });
+
+        let result : IListResult = {
+            items: serviceResult.rows,
+            pagination: pagination.total_items > 0 ? pagination : {},
+        }
+
+        return result;
+    }
+
+    /**
+     * Найти юзеров по фильтру
+     * @param params 
+     * @returns 
+     */
+    async findOne(params: IUserFilter = {}) : Promise<UsersModel>
+    {
+        let search = this.getFilter(params);
+
+        //Поиск по группе (через подзапрос ищем по коду группы, не по id)
+        let userGroupQuery : IUSerGroupsFilter = {};
+        if (params.group) {
+            userGroupQuery.code = params.group;
+        }
+    
+        //Получаем список юзеров с фильтром
+        return await this.model.findOne({
+            where: search,
+            include: {
+                model: UserGroupsSchema,
+                as: 'group',
+                where: userGroupQuery
+            }
+        });
+    }
+
+    getFilter(params)
+    {
         let search = {};
         
         //Поиск по id
@@ -74,39 +133,13 @@ export class UsersService extends Service<UsersModel>
                 [Op.iLike]: '%' + params.email + '%'
             }
         }
-   
+    
         //Поиск по флагу активности
         if (params.active !== undefined) {
             search['active'] = params.active;
         }
 
-        //Поиск по группе (через подзапрос ищем по коду группы, не по id)
-        let userGroupQuery : IUSerGroupsFilter = {};
-        if (params.group) {
-            userGroupQuery.code = params.group;
-        }
-
-        //Формируем пагинацию
-        let pagination = await this.getPagination(params.limit, params.page, search)
-  
-        //Получаем список юзеров с фильтром
-        let serviceResult = await this.model.findAndCountAll({
-            limit: pagination.limit,
-            offset: pagination.offset,
-            where: search,
-            include: {
-                model: UserGroupsSchema,
-                as: 'group',
-                where: userGroupQuery
-            }
-        });
-
-        let result : IListResult = {
-            items: serviceResult.rows,
-            pagination: pagination.total_items > 0 ? pagination : {},
-        }
-
-        return result;
+        return search;
     }
 
     /**

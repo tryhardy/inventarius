@@ -14,3 +14,8 @@ export const DEFAULT_USER_GROUP = IEnumUserGroups.client;
  * Содержит данные о юзере, как и переменная $USER в битре
 */
 export const AUTH_DATA_FIELD = 'auth_data';
+
+//СЕКРЕТНЫЕ КЛЮЧИ
+//TODO вывести эти значения в .env
+export const JWT_INVITE_WORKER_SECRET = 'inviteWorkerSecretKey';
+export const JWT_TIME_JWT_INVITE_WORKER_SECRET = 360000;

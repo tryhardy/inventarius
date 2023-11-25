@@ -28,7 +28,8 @@ export class HashService extends Service<HashModel>
     async verify(hash : string, secret : string)
     {       
         let hashData = JWT.verify(hash, secret);
-        if (!hashData || !hashData.data || !hashData.data.id) {
+ 
+        if (!hashData) {
             throw new AppError(IEnumErrorCodes.BAD_REQUEST, this.errorMessage)
         }
 
