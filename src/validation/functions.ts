@@ -1,6 +1,5 @@
 import { IEnumCompanyType } from "../enums/enum_company_type";
-import { ICompanyCreate } from "../interfaces/models/companies/icompany_create";
-import { IWorkerCreate } from "../interfaces/models/workers/iworker_create";
+import { ICompanyCreate } from "../interfaces/controllers/companies/icompany_create";
 
 /**
  * Кастомные функции валидации

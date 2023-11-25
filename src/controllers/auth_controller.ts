@@ -1,18 +1,18 @@
 import { IEnumSuccessCodes } from "../enums/success_codes";
 import { NextFunction } from 'express';
-import { Body, Controller, Next, Params, Post, Req, Response } from "@decorators/express";
-import { ILogin } from "../interfaces/controllers/ilogin";
+import { Body, Controller, Next, Params, Post, Req, Response, Res } from "@decorators/express";
+import { ILogin } from "../interfaces/controllers/auth/ilogin";
 import { ValidationMiddleware } from "../middleware/validation";
 import { loginSchema } from "../validation/schemas/login_schema";
 import { IEnumValidationTypes } from "../enums/enum_validation";
 import { UsersService } from "../services/users_service";
-import { JWT } from "../interfaces/common/jwt";
+import { JWT } from "../common/jwt";
 import { AppError } from "../common/result/error";
 import { IEnumErrorCodes } from "../enums/error_codes";
 import { IUserDataForAuth } from "../interfaces/controllers/auth/iuser_data_for_auth";
 import { AppSuccess } from "../common/result/success";
 import { IAuthData } from "../interfaces/controllers/auth/iauth_data";
-import { IUserCreate } from "../interfaces/models/users/iuser_create";
+import { IUserCreate } from "../interfaces/controllers/user/iuser_create";
 import { userCreateSchema } from "../validation/schemas/user_create_schema";
 import { IEmailData } from "../interfaces/controllers/auth/iemail_data";
 import { GuardAuthMiddleware } from "../middleware/guard_auth";
@@ -21,25 +21,34 @@ import { emailSchema } from "../validation/schemas/email_schema";
 import { IForgotPasswordResult } from "../interfaces/controllers/auth/iforgot_password_result";
 import { changePasswordSchema } from "../validation/schemas/change_password_schema";
 import { IPasswordData } from "../interfaces/controllers/auth/ipassword_data";
-import { ChangePasswordService } from "../services/change_password_service";
+import { HashService } from "../services/hash_service";
+import { IUserCreateResult } from "../interfaces/controllers/user/iuser_create_result";
+import { CompanyTypesService } from "../services/company_types_service";
+import { ICompanyCreate } from "../interfaces/controllers/companies/icompany_create";
+import { CompaniesService } from "../services/companies_service";
+import { IWorkerCreateDTO } from "../interfaces/dto/iworker_create_dto";
+import { WorkersService } from "../services/workers_service";
+import { debug } from "../app";
 
 @Controller('/auth')
 export class AuthController
 {
     changePasswordSecret = 'change_password';
+    confirmRegisterSecret = 'confirm_register';
     status = IEnumSuccessCodes.SUCCESS;
 
     /**
-     * Авторизация
+     * Авторизация по логину и паролю
+     * Залогиниться могут только активные пользователи, которые подтвердили свой email
      */
     @ValidationMiddleware(loginSchema, IEnumValidationTypes.body)
     @Post('/login')
-    async auth(@Response() res, @Body() params : ILogin, @Next() next: NextFunction)
+    async login(@Res() res, @Body() params : ILogin, @Next() next: NextFunction)
     {
         try {
             let userService = new UsersService;
             let serviceResult = await userService.getByLogin(params.login);
-            
+
             if (serviceResult) {
                 // Проверяем пароль
                 let check = serviceResult.validPassword(params.password);
@@ -57,7 +66,7 @@ export class AuthController
                     let token = JWT.generateAccessToken(userResult);
 
                     let result : IAuthData = {
-                        id: serviceResult.id,
+                        user_id: serviceResult.id,
                         access_token: token
                     };
     
@@ -73,25 +82,91 @@ export class AuthController
     }
 
     /**
-     * Регистрация (с созданием новой компании)
+     * Регистрация (с созданием новой компании и первого неудаляемого сотрудника в ней (овнера))
+     * По умолчанию юзер деактивирован. Чтобы стать активным и залогиниться, ему нужно подтвердить почту
      */
     @ValidationMiddleware(userCreateSchema, IEnumValidationTypes.body)
     @Post('/signup')
-    async create(@Response() res, @Body() params : IUserCreate, @Next() next: NextFunction) 
+    async signup(@Res() res, @Body() params : IUserCreate, @Next() next: NextFunction) 
     {
         try {
-            let service = new UsersService();
-            let serviceResult = await service.create(params);
-            let result = new AppSuccess(serviceResult);
+            let errorTypeCompanyMessage = 'Company type not provided';
+            let errorCreateCompanyMessage = 'Company was not created';
+            let errorCreateWorkerMessage = 'Worker was not created';
+            let ownerPostName = 'Owner';
+
+            let result : IUserCreateResult = {};
+            let companyType;
+            let userService = new UsersService();
+
+            if (!params.company || !params.company.type) {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, '', {error: errorTypeCompanyMessage})
+            }
+
+            //Проверяем, существует ли в БД указанный тип компании (ЮЛ/ФЛ)
+            companyType = await (new CompanyTypesService).getByCode(params.company.type);
+            if (!companyType.id) {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, '', {error: errorTypeCompanyMessage})
+            }
+    
+            let user = await userService.create(params);
+  
+            if (user) {
+                result.user = await userService.getById(user.id);
+            }
+
+            //Создаем компанию, привязанную к этому пользователю
+            let companyCreateData : ICompanyCreate = {
+                type: params.company.type
+            }
+
+            let companyService = new CompaniesService;
+            let company = await companyService.create(companyCreateData, user.id);
+            result.company = company;
+
+            if (!company.id) {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, '', {error: errorCreateCompanyMessage})
+            }
+
+            //Если компания создалась, создаем в ней первого сотрудника (овнера)
+            let workerData : IWorkerCreateDTO = {
+                name: user.name,
+                last_name: user.last_name ?? '',
+                company_id: company.id,
+                post: ownerPostName,
+                active: true,
+                is_owner: true,
+                user_id: user.id
+            }
+
+            let worker = await (new WorkersService).create(workerData);
+
+            if (!worker) {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, '', {error: errorCreateWorkerMessage})
+            }
+
+            result.worker = worker;
+
+            //TODO SEND EMAIL Генерируем токен для подтверждения EMAIL и отправляем на почту ссылку
+            let token = JWT.generateAccessToken(
+                {id: user.id},
+                360000,
+                this.confirmRegisterSecret
+            );
+
+            //Если включен DEBUG, возвращаем в запросе код токена для подтверждения EMAIL
+            if (debug) {
+                result.token = token;
+            }
             
-            res.status(this.status);
-            res.send(result);
+            res.send(new AppSuccess(result));
         }
         catch(error) {
-            console.log(error)
-            next(error);
+            next(error)
         }
     }
+
+    //TODO ROUT создать ссылку-приглашение по хэшу
 
     /**
      * Создать нового пользователя по хэшу с привязкой к ранее созданной компании
@@ -101,19 +176,73 @@ export class AuthController
     @Post('/signup/:hash')
     async createByHash(@Response() res, @Body() params : IUserCreate, @Params('hash') hash : string, @Next() next: NextFunction) 
     {
-        res.status(this.status);
         res.send(hash);
+    }
+
+    /**
+     * Подтверждение регистрации
+     * Если пользователь зарегистрировался на портале, то он по емайлу получает ссылку на подтверждение регистрации
+     * После перехода по этой ссылке, пользователь становится активным
+     */
+    @Post('/confirm/:hash')
+    async confirmEmail(@Response() res, @Params('hash') hash : string, @Next() next: NextFunction) 
+    {
+        let successMessage = 'Email was confirmed';
+        let errorUpdateUserMessage = 'User not updated';
+        let errorHashMessage = 'Hash was already used';
+        let errorAlreadyConfirmed = 'User was already confirmed';
+
+        try {
+            let hashService = new HashService;
+            let userService = new UsersService;
+
+            //Парсим hash в массив
+            let hashData = await hashService.verify(hash, this.confirmRegisterSecret);
+
+            //Записываем хеш в базу, чтобы его нельзя было повторно использовать
+            let savedHash = await hashService.save(hash);
+            //Если хэш не сохранился, тогда не позволяем подтвердить емайл
+            if (!savedHash || !savedHash.id) {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorHashMessage)
+            }
+
+            let user_id = hashData.data.id;
+            let user = await userService.getById(user_id, false);
+
+            //Если пользователь уже активирован, выдаем ошибку
+            if (user && user.id) {
+
+                let result = await userService.update(user_id, {active: true})
+                //Если по какой-то причине юзер не обновился, удаляем тогда и хэш
+                if (!result || !result.id) {
+                    await hashService.delete(savedHash.id);
+                    throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorUpdateUserMessage)
+                }
+
+                res.send(new AppSuccess({id: user.id}, successMessage));
+            }
+            else {
+                //Хэш не удаляем, ведь пользователь уже активен, а значит такой хеш бесполезен.
+                //Пусть хранится в базе
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorAlreadyConfirmed)
+            }
+
+            res.send(hash);
+        }
+        catch(error) {
+            next(error)
+        }
     }
     
     /**
      * Отправить запрос на подтверждение пароля
      * TODO send Email with HASH
      */
-    @GuardAuthMiddleware(false)
     @ValidationMiddleware(emailSchema, IEnumValidationTypes.body)
     @Post('/forgot_password')
     async forgot_password(@Response() res, @Req(AUTH_DATA_FIELD) auth_data, @Body() params : IEmailData, @Next() next: NextFunction)
     {
+        let resultMessage = 'Сообщение о смене пароля будет направлено на почту, если такой пользователь существует';
         let result;
         let data : IForgotPasswordResult = {};
         
@@ -129,68 +258,64 @@ export class AuthController
                 this.changePasswordSecret
             );
 
-            //todo отправляем на почту
+            //TODO SEND EMAIL отправляем на почту
             let send = false;
 
             //Если смену пароля запрашивает менеджер или админ, отдаем в ответе сразу хэш (для тестирования)
-            //if (auth_data && (auth_data.group === IEnumUserGroups.admin || auth_data.group === IEnumUserGroups.manager)) {
+            if (auth_data && debug === true) {
                 data.token = token;
                 data.send = send;
                 result = data;
-            //}
+            }
 
         }
         
-        res.send(new AppSuccess(result, 'Сообщение о смене пароля будет направлено на почту, если такой пользователь существует'))
+        res.send(new AppSuccess(result, resultMessage))
     }
 
     /**
      * Восстановление пароля
      */
-    @GuardAuthMiddleware(false)
     @ValidationMiddleware(changePasswordSchema, IEnumValidationTypes.body)
     @Post('/change_password/:hash')
     async change_password(@Response() res, @Req(AUTH_DATA_FIELD) auth_data, @Body() body : IPasswordData, @Params('hash') hash : string, @Next() next: NextFunction)
     {
+        let successMessage = 'Password was changed';
+        let errorMessage = 'Wrong hash data provided';
+
         try {
-            //Проверяем хэш в базе/
-            //Если он уже там есть, тогда он уже был использован - не позволяем сменить пароль
-            let changePasswordService = new ChangePasswordService;
-            let isNewHash = await changePasswordService.check(hash);
-            if (!isNewHash) {
-                throw new AppError(IEnumErrorCodes.BAD_REQUEST, 'Wrong hash data provided')
-            }
+            let userService = new UsersService;
+            let hashService = new HashService;
 
             //Парсим hash в массив
-            let hashData = JWT.verify(hash, this.changePasswordSecret);
-            
-            if (hashData && hashData.data && hashData.data.id) {
-                //Записываем хеш в базу, чтобы его нельзя было повторно использовать
-                let savedHash = await changePasswordService.save(hash);
+            let hashData = await hashService.verify(hash, this.changePasswordSecret);
 
-                //Если хэш сохранился, тогда позволяем сменить пароль
-                if (savedHash && savedHash.id) {
-                    let id = hashData.data.id;
-                    let userService = new UsersService;
-                    let user = await userService.getById(id);
+            //Записываем хеш в базу, чтобы его нельзя было повторно использовать
+            let savedHash = await hashService.save(hash);
+            //Если хэш не сохранился, тогда не позволяем сменить пароль
+            if (!savedHash || !savedHash.id) {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorMessage)
+            }
 
-                    if (user && user.id) {
-                        let result = await userService.update(id, {
-                            password: body.password
-                        })
+            let user_id = hashData.data.id;
+            let user = await userService.getById(user_id);
 
-                        if (result && result.id) {
-                            res.send(new AppSuccess({}, 'Password was changed'));
-                        }
-                        else {
-                            //Если по какой-то причине пароль не удалось сменить, удаляем тогда и хэш
-                            await changePasswordService.delete(savedHash.id);
-                        }
-                    }
+            if (user && user.id) {
+                //Обновляем пароль юзера
+                let result = await userService.update(user_id, {password: body.password})
+
+                //Если по какой-то причине пароль не удалось сменить, удаляем тогда и хэш
+                if (!result || !result.id) {
+                    await hashService.delete(savedHash.id);
+                    throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorMessage)
                 }
+
+                res.send(new AppSuccess({}, successMessage));
+            }
+            else {
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorMessage)
             }
             
-            throw new AppError(IEnumErrorCodes.BAD_REQUEST, 'Wrong hash data provided')
         }
         catch(error) {
             next(error);

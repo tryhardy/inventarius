@@ -1,5 +1,5 @@
-import { IDates } from "../idates";
-import { IID } from "../iid";
+import { IDates } from "./idates";
+import { IID } from "./iid";
 
 //Список сотрудников компаний
 export interface IWorker extends IID, IDates {

@@ -5,5 +5,5 @@ export interface ICompanyCreateDTO {
     name ?: string,
     active : boolean,
     address ?: string
-    creator : string,
+    creator_id : string,
 }

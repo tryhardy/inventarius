@@ -1,14 +1,15 @@
 import 'dotenv';
 import jwt from 'jsonwebtoken';
 
-import { IUserDataForAuth } from "../controllers/auth/iuser_data_for_auth";
+import { IUserDataForAuth } from "../interfaces/controllers/auth/iuser_data_for_auth";
 import { Request } from 'express';
+import { RequestAuthData } from '../interfaces/middleware/request_auth_data';
 
 export class JWT 
 {
     protected static secret = process.env.TOKEN_SECRET;
 
-    static generateAccessToken(payload: IUserDataForAuth|any, expires = 3600, secret = JWT.secret) {
+    static generateAccessToken(payload: IUserDataForAuth|any, expires = 360000, secret = JWT.secret) {
         return jwt.sign(
             {
                 //exp: Math.floor(Date.now() / 1000) + (60 * 60),
@@ -41,5 +42,28 @@ export class JWT
         }
 
         return null;
+    }
+
+    /**
+     * Извлечь авторизационные данные из Headers: Bearer TOKEN
+     * @param req 
+     * @returns 
+     */
+    static getAuthDataFromHeaders(req: Request) : RequestAuthData
+    {
+        let token = JWT.extractToken(req); //from header "Bearer /TOKEN/"
+        let data;
+    
+        if (token) {
+            data = JWT.verify(token);
+        }
+
+        let requestAuthData : RequestAuthData = {
+            authorized : data ? true : false,
+            user: data ? data.data : {},
+            group: data ? data.data.group : ''
+        };
+
+        return requestAuthData;
     }
 }

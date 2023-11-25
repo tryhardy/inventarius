@@ -2,7 +2,7 @@ import { DataTypes, Model, Sequelize } from 'sequelize';
 import { ModelOptions } from '../common/options/model_options';
 import { v4 as uuidv4} from 'uuid';
 import { IEnumUserGroups } from '../enums/enum_user_groups';
-import { IUserGroups } from '../interfaces/models/users/iuser_groups';
+import { IUserGroups } from '../interfaces/models/iuser_groups';
 
 const options = new ModelOptions('user_groups');
 

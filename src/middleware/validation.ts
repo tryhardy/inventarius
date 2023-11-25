@@ -7,7 +7,7 @@ import { AppError } from "../common/result/error";
 import { IEnumStatuses } from "../enums/enum_statuses";
 import { IEnumErrorCodes } from "../enums/error_codes";
 
-export function ValidationMiddleware(schema: ObjectSchema, type: string) 
+export function ValidationMiddleware(schema: ObjectSchema, type: string = IEnumValidationTypes.query) 
 {   
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) 
     {

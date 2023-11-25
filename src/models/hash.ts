@@ -1,11 +1,11 @@
 import { DataTypes, Model } from 'sequelize';
 import { ModelOptions } from '../common/options/model_options';
 import { IEnumUserGroups } from '../enums/enum_user_groups';
-import { IChangePassword } from '../interfaces/models/ichange_password';
+import { IHash } from '../interfaces/models/ihash';
 
-const options = new ModelOptions('change_password_hash');
+const options = new ModelOptions('hash');
 
-class ChangePasswordModel extends Model implements IChangePassword
+class HashModel extends Model implements IHash
 {
   id: string;
   hash: IEnumUserGroups;
@@ -13,7 +13,7 @@ class ChangePasswordModel extends Model implements IChangePassword
   date_update: Date;
 }
 
-const ChangePasswordSchema = ChangePasswordModel.init({
+const HashSchema = HashModel.init({
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -27,4 +27,4 @@ const ChangePasswordSchema = ChangePasswordModel.init({
   },
 }, options);
 
-export {ChangePasswordModel, ChangePasswordSchema}
+export {HashModel, HashSchema}

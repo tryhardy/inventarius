@@ -44,14 +44,28 @@ const CompaniesSchema = CompaniesModel.init(
     options
 );
 
+//Связка с типами компаний
 CompanyTypesSchema.hasMany(CompaniesSchema, {
     foreignKey: 'type_id',
-    keyType: DataTypes.UUID
+    keyType: DataTypes.UUID,
+    as: 'type'
 });
-
+CompaniesSchema.belongsTo(CompanyTypesSchema, {
+    foreignKey: 'type_id',
+    keyType: DataTypes.UUID,
+    as: 'type'
+});
+ 
+//Связка с пользователями - овнерами
 UsersSchema.hasMany(CompaniesSchema, {
-    foreignKey: 'creator',
-    keyType: DataTypes.UUID
+    foreignKey: 'creator_id',
+    keyType: DataTypes.UUID,
+    as: 'creator'
+});
+CompaniesSchema.belongsTo(UsersSchema, {
+    foreignKey: 'creator_id',
+    keyType: DataTypes.UUID,
+    as: 'creator'
 });
 
 export { CompaniesModel, CompaniesSchema }

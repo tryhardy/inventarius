@@ -19,11 +19,5 @@ export class UserGroupsService extends Service<UserGroupsModel>
         let result = await this.model.findOne(query);
 
         return result;
-    }
-
-    async getById(id) : Promise<UserGroupsModel>
-    {
-        return await this.model.findById(id);
-    }
-    
+    }    
 }

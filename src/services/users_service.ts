@@ -1,4 +1,4 @@
-import { IUserCreate } from "../interfaces/models/users/iuser_create";
+import { IUserCreate } from "../interfaces/controllers/user/iuser_create";
 import { DEFAULT_USER_GROUP } from "../common/constants";
 import { UsersModel, UsersSchema } from "../models/users";
 import { Service } from "./service";
@@ -7,17 +7,18 @@ import { IUserCreateResult } from "../interfaces/controllers/user/iuser_create_r
 import { AppError } from "../common/result/error";
 import { IEnumErrorCodes as ErrorCodes } from "../enums/error_codes";
 import { CompanyTypesService } from "./company_types_service";
-import { ICompanyCreate } from "../interfaces/models/companies/icompany_create";
+import { ICompanyCreate } from "../interfaces/controllers/companies/icompany_create";
 import { CompaniesService } from "./companies_service";
-import { IWorkerCreateDTO } from "../interfaces/models/workers/iworker_create_dto";
+import { IWorkerCreateDTO } from "../interfaces/dto/iworker_create_dto";
 import { WorkersService } from "./workers_service";
 import { IUserFilter } from "../interfaces/controllers/user/iuser_filter";
 import { Op } from "sequelize";
 import { IListResult } from "../interfaces/services/ilist_result";
 import { UserGroupsSchema } from "../models/user_groups";
-import { IUSerGroupsFilter } from "../interfaces/controllers/user_groups/isuer_groups_filter";
-import { IUserUpdate } from "../interfaces/models/users/iuser_update";
-import { IUserUpdateDTO } from "../interfaces/services/users/iuser_update_dto";
+import { IUSerGroupsFilter } from "../interfaces/controllers/user/isuer_groups_filter";
+import { IUserUpdate } from "../interfaces/controllers/user/iuser_update";
+import { IUserUpdateDTO } from "../interfaces/dto/iuser_update_dto";
+import { IUserCreateDTO } from "../interfaces/dto/iuser_create_dto";
 
 export class UsersService extends Service<UsersModel>
 {
@@ -109,16 +110,22 @@ export class UsersService extends Service<UsersModel>
     }
 
     /**
-     * Найти юзера по логину
+     * Найти юзера по логину (по умолчанию ищет только активных юзеров)
      * @param login 
      * @returns 
      */
-    async getByLogin(login: string)
+    async getByLogin(login: string, active = true)
     {
+        let where = {
+            email: login
+        };
+
+        if (typeof active == "boolean") {
+            where['active'] = active;
+        }
+
         let user = await this.model.findOne({
-            where: {
-                email: login
-            },
+            where: where,
             attributes: ['id', 'name', 'last_name', 'email', 'group_id', 'salt', 'password'],
             include: UsersService.include,
         })
@@ -131,13 +138,19 @@ export class UsersService extends Service<UsersModel>
      * @param login 
      * @returns 
      */
-    async getById(id: string)
+    async getById(id: string, active = null)
     {
+        let where = {
+            id: id
+        }
+
+        if (typeof active == "boolean") {
+            where['active'] = active;
+        }
+
         let user = await this.model.findOne({
-            where: {
-                id: id
-            },
-            attributes: ['id', 'name', 'last_name', 'email', 'group_id'],
+            where: where,
+            attributes: ['id', 'name', 'last_name', 'email', 'group_id', 'active'],
             include: UsersService.include,
         })
 
@@ -150,100 +163,29 @@ export class UsersService extends Service<UsersModel>
      * @param params 
      * @returns 
      */
-    protected async new(params : IUserCreate) : Promise<UsersModel>
+    async create(params : IUserCreate) : Promise<UsersModel>
     {
         try {
-
-            if (!params.group_id) {
-                let userGroups = new UserGroupsService();
-                let defaultUserGroup = await userGroups.getByCode(DEFAULT_USER_GROUP);
+            let errorMessage = 'Default user group not found in database';
+            let userGroupCode = params.group ?? DEFAULT_USER_GROUP;
+            let userData : IUserCreateDTO = {
+                name: params.name,
+                last_name: params.last_name,
+                email: params.email,
+                password: params.password
+            }
+            let userGroups = new UserGroupsService();
+            let defaultUserGroup = await userGroups.getByCode(userGroupCode);
    
-                if (!defaultUserGroup.id) {
-                    throw new Error('Default user group not found in database')
-                }
-
-                params.group_id = defaultUserGroup.id;
+            if (!defaultUserGroup.id) {
+                throw new Error(errorMessage)
             }
 
-            return await this.model.create(params);
+            userData.group_id = defaultUserGroup.id;
+
+            return await this.model.create(userData);
         }
         finally {}
-    }
-
-    /**
-     * Создает пользователя
-     * к этому пользователю создает компанию
-     * к этой компании создает неудаляемого работника (владельца)
-     * 
-     * @param params 
-     * @param createWorker 
-     * @returns 
-     */
-    async create(params : IUserCreate, createCompany = true, createWorker = true)
-    {
-        let result : IUserCreateResult = {};
-
-        let companyType;
-
-        if (createCompany) {
-            if (!params.company || !params.company.type) {
-                throw new AppError(ErrorCodes.BAD_REQUEST, '', {error: "Company type not provided"})
-            }
-
-            //Проверяем, существует ли в БД указанный тип компании (ЮЛ/ФЛ)
-            companyType = await (new CompanyTypesService).getByCode(params.company.type);
-            if (!companyType.id) {
-                throw new AppError(ErrorCodes.BAD_REQUEST, '', {error: "Company type not found"})
-            }
-        }
-
-        //Создаем пользователя
-        let userService = new UsersService;
-        let user = await userService.new(params);
-  
-        if (user) {
-            result.user = await userService.getById(user.id);
-        }
-
-        if (user && createCompany) {
-            //Создаем компанию, привязанную к этому пользователю
-            let companyCreateData : ICompanyCreate = {
-                type: params.company.type,
-                creator: user.id
-            }
-            let companyService = new CompaniesService;
-            let company = await companyService.create(companyCreateData);
-
-            result.company = company;
-
-            if (!company.id) {
-                throw new AppError(ErrorCodes.BAD_REQUEST, '', {error: "Company was not created"})
-            }
-
-            if (createWorker) {
-                //Если компания создалась, создаем в ней первого сотрудника (овнера)
-                let workerData : IWorkerCreateDTO = {
-                    name: user.name,
-                    last_name: user.last_name ?? '',
-                    company_id: company.id,
-                    post: 'Owner',
-                    active: true,
-                    is_owner: true,
-                    user_id: user.id
-                }
-
-                let worker = await (new WorkersService).create(workerData);
-
-                if (!worker) {
-                    throw new AppError(ErrorCodes.BAD_REQUEST, '', {error: "Worker was not created"})
-                }
-
-                result.worker = worker;
-            }
-    
-        }
-
-        return result;
     }
 
     /**

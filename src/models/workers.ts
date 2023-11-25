@@ -6,14 +6,14 @@ import { v4 as uuidv4} from 'uuid';
 import { CompaniesSchema } from './companies';
 import { CompanyRolesSchema } from './company_roles';
 import { ModelOptions } from '../common/options/model_options';
-import { IWorker } from '../interfaces/models/workers/iworker';
+import { IWorker } from '../interfaces/models/iworker';
 
 const options = new ModelOptions('workers');
 
 class WorkersModel extends Model implements IWorker
 {
     is_owner: boolean;
-    id: string;
+    id: string; 
     name: string;
     last_name?: string;
     post?: string;
@@ -57,19 +57,34 @@ const WorkersSchema = WorkersModel.init(
     options
 );
 
-CompaniesSchema.hasMany(WorkersSchema, {
-    foreignKey: 'company_id',
-    keyType: DataTypes.UUID
+UsersSchema.hasMany(WorkersSchema, {
+    as: 'worker',
+    foreignKey: 'user_id',
+});
+WorkersSchema.belongsTo(UsersSchema, {
+    foreignKey: 'user_id',
+    keyType: DataTypes.UUID,
+    as: 'user',
 });
 
-UsersSchema.hasMany(WorkersSchema, {
-    foreignKey: 'user_id',
-    keyType: DataTypes.UUID
+CompaniesSchema.hasMany(WorkersSchema, {
+    as: 'worker',
+    foreignKey: 'company_id',
+});
+WorkersSchema.belongsTo(CompaniesSchema, {
+    foreignKey: 'company_id',
+    keyType: DataTypes.UUID,
+    as: 'company',
 });
 
 CompanyRolesSchema.hasMany(WorkersSchema, {
+    as: 'worker',
     foreignKey: 'role_id',
-    keyType: DataTypes.UUID
 });
+WorkersSchema.belongsTo(CompanyRolesSchema, {
+    foreignKey: 'role_id',
+    keyType: DataTypes.UUID,
+    as: 'role',
+})
 
 export { WorkersModel, WorkersSchema }

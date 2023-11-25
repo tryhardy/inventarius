@@ -3,7 +3,7 @@ import { ModelOptions } from '../common/options/model_options';
 import { UserGroupsSchema } from './user_groups';
 import { v4 as uuidv4} from 'uuid';
 import { IEnumUserGroups } from '../enums/enum_user_groups';
-import { IUser } from '../interfaces/models/users/iuser';
+import { IUser } from '../interfaces/models/iuser';
 import crypto from 'crypto';
 
 const options = new ModelOptions('users');
@@ -81,11 +81,14 @@ const UsersSchema = UsersModel.init(
             // allowNull: false,
         }
     }, 
-    options
+    options 
 );
 
 //Связка с группами пользователей
-UserGroupsSchema.hasMany(UsersSchema, {});
+UserGroupsSchema.hasMany(UsersSchema, {
+    foreignKey: 'group_id',
+    as: 'group'
+});
 UsersSchema.belongsTo(UserGroupsSchema, {
     foreignKey: 'group_id',
     keyType: DataTypes.UUID,

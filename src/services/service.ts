@@ -18,10 +18,16 @@ export abstract class Service<T>
         finally {}
     }
 
-    async getById(id: string) : Promise<T[]>
+    async getById(id: string) : Promise<T>
     {
         try {
-            return await this.model.findByPk(id);
+            let query = {
+                where: {
+                    id: id
+                }
+            };
+
+            return await this.model.findOne(query);
         }
         finally {}
     }
@@ -33,7 +39,7 @@ export abstract class Service<T>
      * @param where 
      * @returns 
      */
-    async getPagination(limit, page, where = {}) : Promise<IPagination>
+    async getPagination(limit, page, where = {}, include = []) : Promise<IPagination>
     {
         let query = {
             where: where
@@ -47,6 +53,10 @@ export abstract class Service<T>
         else {
             page = 1;
             offsetRows = 0;
+        }
+
+        if (include.length > 0) {
+            query['include'] = include;
         }
 
         query['limit'] = limitRows;

@@ -2,7 +2,7 @@ import { DataTypes, Model, Sequelize } from 'sequelize';
 import { ModelOptions } from '../common/options/model_options';
 import { v4 as uuidv4 } from 'uuid';
 import { IEnumCompanyRole } from '../enums/enum_company_role';
-import { IWorkerRoles } from '../interfaces/models/workers/worker_roles';
+import { IWorkerRoles } from '../interfaces/models/worker_roles';
 
 const options = new ModelOptions('company_roles');
 

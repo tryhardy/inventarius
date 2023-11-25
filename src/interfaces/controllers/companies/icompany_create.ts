@@ -3,6 +3,5 @@
 export interface ICompanyCreate {
     type: string,
     name ?: string,
-    address ?: string,
-    creator ?: string
+    address ?: string
 }

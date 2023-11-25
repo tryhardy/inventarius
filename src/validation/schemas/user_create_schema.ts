@@ -10,5 +10,6 @@ export const userCreateSchema = Joi.object({}).keys({
     confirm_password: Joi.any().equal(Joi.ref('password')).required().label('Confirm password').messages({ 
         'any.only': '{{#label}} does not match' 
     }),
-    company: Joi.object().custom(companyValidator)
+    company: Joi.object().custom(companyValidator),
+    group: Joi.string()
 })

@@ -18,14 +18,17 @@ export class DefaultMiddleware implements Middleware
      */
     public use(req: Request, res: Response, next: NextFunction): void {
         try {
-            if (res.statusCode < ErrorCodes.BAD_REQUEST) {
+            
+            console.log('DEFAULT MIDDLEWARE WORKED');
+
+            if(res.headersSent !== true && res.statusCode < ErrorCodes.BAD_REQUEST) {
+                console.log('ERROR MIDDLEWARE START WORKING - ROUT NOT FOUND -  SET DEFAULT 404 ERROR')
                 let code : number = ErrorCodes.NOT_FOUND;
                 throw new AppError(code);
             }
         }
         catch (error) {
-            console.log('ERROR MIDDLEWARE WORKED - ROUT NOT FOUND -  SET DEFAULT 404 ERROR')
-            next(error);
+            next(error);    
         }
     }
 
@@ -38,6 +41,8 @@ export class DefaultMiddleware implements Middleware
      * @param next 
      */
     static setError (err: any, req: Request, res: Response, next: Function) {
+
+        console.log('START WORKING ERROR MIDDLEWARE')
 
         let message;
         let data;
@@ -73,9 +78,6 @@ export class DefaultMiddleware implements Middleware
         else {
             error = DefaultMiddleware.formatError(err);
         }
-    
-        res.status(error.code);
-        res.send(error);
 
         //Логируем ошибку в файл и в Монго БД
         LoggerMiddleware.getLog(error, req, 'errors').log({
@@ -83,7 +85,8 @@ export class DefaultMiddleware implements Middleware
             message: `Logging request error ${req.url} - ${res.statusCode} - ${req.method}.`
         });
 
-        next(error);
+        res.status(error.code);
+        res.send(error);
     }
     
     /**

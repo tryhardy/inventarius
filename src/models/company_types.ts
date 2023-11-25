@@ -2,7 +2,7 @@ import { DataTypes, Model, Sequelize } from 'sequelize';
 import { ModelOptions } from '../common/options/model_options';
 import { v4 as uuidv4} from 'uuid';
 import { IEnumCompanyType } from '../enums/enum_company_type';
-import { ICompanyType } from '../interfaces/models/companies/icompany_type';
+import { ICompanyType } from '../interfaces/models/icompany_type';
 
 const options = new ModelOptions('company_types');
 
