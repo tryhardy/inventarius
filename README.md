@@ -33,13 +33,15 @@ $ npm install
 
 ## Старт приложения через Docker  
 
+Первый запуск обязательно выполнять одной из следующих команд:
 ```bash
 #Запуск приложения в режиме разработки
-npm run docker:dev
+npm run docker:start:dev
 
 #Запуск приложения в режиме продакшена
-npm run docker:prod
+npm run docker:start:prod
 ```
+Сервер запустится в первый раз с node v20, установятся все необходимые зависимости и миграции.
 
 ## Старт приложения без Docker
 
@@ -61,25 +63,37 @@ $ npm run start:prod
 - 401 - 'Unauthorized' - пользователь неавторизован
 - 403 - 'Access denied' - Отказано в доступе
 - 404 - 'Rout not found' - Маршрут не найден    
+- 417 - 'Validation error' - Ошибка валидации
     
 Как вывести ошибку в роуте:
 ```ts
 import { ErrorCodes } from '/src/enums/error-codes';
 
 router.get('/test', (req, res, next) => {
-    // res.send() - не вызываем
-    // в метод next() передаем код ошибки, например ErrorCodes.BAD_REQUEST
-    // если не передать код ошибки - тогда по умолчанию выведется 404
-    next(ErrorCodes.BAD_REQUEST);
+    // если не передать код ошибки первым аргументом - тогда по умолчанию выведется ошибка 404
+    try {
+        throw new AppError(
+            IEnumErrorCodes.BAD_REQUEST, 
+            'Some message', 
+            {data: 'Some data'}
+        );
+
+    }
+    catch(error) {
+        next(error);
+    }
 });
 ```
 Формат вывода ошибок (json):
 
-```json
-{
-    "status": "ERROR",
-    "code": 404,
-    "message": "Rout not found"
+```js
+//Экземпляр класса AppError
+interface IError {
+    status: number;
+    code : number;
+    data ?: any;
+    message ?: string;
+    date: string
 }
 ```
 
@@ -90,38 +104,24 @@ router.get('/test', (req, res, next) => {
 - express-winston
 - winston-mongodb
 
-Логи по умолчанию пишутся в папку **/logs/**, а также сохраняются в БД MongoDB.
+Логи по умолчанию пишутся в папку **/logs/**, а также сохраняются в БД MongoDB (если есть подключение к этой БД).
 
 В логи записывается каждое обращение к api перед роутингом.  
 В логи записывается каждая ошибка обращения к api после роутинга.  
 Логировать можно что угодно: отправку писем, изменения записей в БД и т.д., методом, описанным ниже:
 ```ts
-import { getLogger } from '/src/middleware/loggers/logger'
+import { LoggerMiddleware } from '/src/middleware/loggers'
 
 router.get('/test', (req, res, next) => {
 
-    /**
-     * data - передаем, если необходимо сохранить какие-то специфические 
-     * кастомные данные. По умолчанию {}
-     * 
-     * req - объект запроса. Передаем, если нужно
-     * подтягивать информацию о url, ip адресе и тп. По умолчанию {}
-     * 
-     * path - путь к файлу логов. По умолчанию /logs/
-     * 
-     * collection - таблица в БД. По умолчанию - logs
-     */
-    const logger = getLogger(
-        data : object,
-        req : object,                
-        path : string, 
-        collection : string
-    );
-    
-    logger.log({
-        level: 'info',
-        message: 'This is super secret - hide it.',
-    })
+    //Вызов кастомного лога
+    let data = {};
+    LoggerMiddleware.getLog(data, req, 'info').log({
+        level: LoggerMiddleware.baseLogLevel,
+        message: `Some data to log`
+    });
+
+    res.send('test');
 });
 ```
 

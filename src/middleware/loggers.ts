@@ -1,4 +1,3 @@
-import expressWinston from "express-winston";
 import winston, { Logger } from "winston";
 import 'winston-mongodb';
 import { Request, NextFunction, Response } from "express";

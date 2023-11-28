@@ -1,24 +1,17 @@
 import { DataTypes, Model } from 'sequelize';
-import { ModelOptions } from '../common/options/model_options';
-import { UserGroupsSchema } from './user_groups';
-import { IEnumUserGroups } from '../enums/enum_user_groups';
-import { IUser } from '../interfaces/models/iuser';
-import crypto from 'crypto';
+import db from '../config/db.js'
+import { UserGroupsSchema } from './user_groups.js';
 
-const options = new ModelOptions('users');
+const options = {
+    sequelize: db,
+    timestamps: true,
+    createdAt:'date_create',
+    updatedAt:'date_update',
+    tableName: 'users'
+};
 
-class UsersModel extends Model implements IUser
+class UsersModel extends Model
 {
-    group_id: IEnumUserGroups;
-    id: string;
-    name: string;
-    last_name: string;
-    email: string;
-    password: string;
-    date_create: Date;
-    date_update: Date;
-    salt : string
-
     /**
      * Проверяем пару логин-пароль
      * @param password 
@@ -28,7 +21,7 @@ class UsersModel extends Model implements IUser
         var hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, `sha512`).toString(`hex`); 
         return this.password === hash; 
     }
-
+    
     /**
      * Генерим пароль на основе соли
      * @param password 

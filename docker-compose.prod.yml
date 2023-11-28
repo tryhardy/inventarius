@@ -1,16 +1,18 @@
 services:
   inventarius:
     image: node:20
-    container_name: inventarius
+    container_name: inventarius-prod
     volumes:
       - ./:/app
     environment:
-      PORT: ${PORT}
-      MONGO_URL: ${MONGO_URL}
-      DB_HOST: ${DB_HOST}
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
+      PORT: ${DOCKER_PORT}
+      MONGO_URL: ${DOCKER_MONGO_URL}
+      MONGO_DBNAME: ${DOCKER_MONGO_DBNAME}
+      DB_HOST: ${DOCKER_DB_HOST}
+      DB_DATABASE: ${DOCKER_DB_DATABASE}
+      DB_USERNAME: ${DOCKER_DB_USERNAME}
+      DB_PASSWORD: ${DOCKER_DB_PASSWORD}
+      DB_DIALECT: ${DOCKER_DB_DIALECT}
     ports:
       - ${PORT}:${PORT}
     working_dir: /app

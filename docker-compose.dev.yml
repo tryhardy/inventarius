@@ -1,4 +1,16 @@
 services:
+  #postgres db service
+  postgres:
+    image: postgres:13.3
+    container_name: postgres
+    environment:
+      POSTGRES_DB: ${DOCKER_DB_DATABASE}
+      POSTGRES_USER: ${DOCKER_DB_USERNAME}
+      POSTGRES_PASSWORD: ${DOCKER_DB_PASSWORD}
+    volumes:
+      - ${DOCKER_POSTGRES_VOLUME}
+    ports:
+      - "${DOCKER_DB_PORT}:${DOCKER_DB_PORT}"
   #mongo db service
   mongo:
     image: mongo
@@ -17,19 +29,9 @@ services:
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${DOCKER_MONGO_INITDB_ROOT_USERNAME}
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${DOCKER_MONGO_INITDB_ROOT_PASSWORD}
-      ME_CONFIG_MONGODB_URL: mongodb://${DOCKER_MONGO_INITDB_ROOT_USERNAME}:${DOCKER_MONGO_INITDB_ROOT_PASSWORD}@mongo:27017
-  #postgres db service
-  postgres:
-    image: postgres:13.3
-    container_name: postgres
-    environment:
-      POSTGRES_DB: ${DOCKER_DB_DATABASE}
-      POSTGRES_USER: ${DOCKER_DB_USERNAME}
-      POSTGRES_PASSWORD: ${DOCKER_DB_PASSWORD}
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-    ports:
-      - "${DOCKER_DB_PORT}:${DOCKER_DB_PORT}"
+      ME_CONFIG_MONGODB_URL: ${DOCKER_ME_CONFIG_MONGODB_URL}
+    depends_on:
+      - mongo
   #postgres admin panel service
   pgadmin-compose:
     image: dpage/pgadmin4
@@ -38,28 +40,42 @@ services:
       PGADMIN_DEFAULT_EMAIL: "placeholder@example.com"
       PGADMIN_DEFAULT_PASSWORD: "fakepassword123!"
     ports:
-      - "16543:80"
+      - "${DOCKER_PGADMIN_PORT}:${DOCKER_PGADMIN_LOCAL_PORT}"
     depends_on:
       - postgres
-  #express-app service
+  #express-app service 
   inventarius:
     image: node:20
-    container_name: inventarius
+    container_name: inventarius-dev
     volumes:
-      - ./:/app
+      - ${DOCKER_APP_VOLUME}
     environment:
       PORT: ${DOCKER_PORT}
       MONGO_URL: ${DOCKER_MONGO_URL}
+      MONGO_DBNAME: ${DOCKER_MONGO_DBNAME}
       DB_HOST: ${DOCKER_DB_HOST}
       DB_DATABASE: ${DOCKER_DB_DATABASE}
       DB_USERNAME: ${DOCKER_DB_USERNAME}
       DB_PASSWORD: ${DOCKER_DB_PASSWORD}
+      DB_DIALECT: ${DOCKER_DB_DIALECT}
+      NODE_ENV: ${NODE_ENV}
     ports:
       - ${DOCKER_PORT}:${DOCKER_PORT}
     working_dir: /app
-    command: npm run start:dev
+    command: 'npm run start:dev'
     depends_on:
       - mongo
       - postgres
+      - pgadmin-compose
+      - mongo-express
+    x-develop: 
+      watch:
+        - action: sync
+          path: ./app
+          target: ./app/src
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: package.json
 volumes:
   db-data:
