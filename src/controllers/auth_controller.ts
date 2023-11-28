@@ -71,13 +71,9 @@ export class AuthController
     
                     res.send(new AppSuccess(result, '', this.status))
                 }
-                else {
-                    throw new AppError(IEnumErrorCodes.UNAUTHORIZED, 'Login failed')
-                }
             }
-            else {
-                throw new AppError(IEnumErrorCodes.UNAUTHORIZED, 'Login failed')
-            }            
+            
+            throw new AppError(IEnumErrorCodes.UNAUTHORIZED, 'Login failed')
         }
         catch (error) {
             next(error);
@@ -211,8 +207,8 @@ export class AuthController
                 throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorCreateUserMessage)
             }
 
-            await worker.update({user_id: user.id});
-            result.worker = worker;
+
+            result.worker = await workerService.update(worker.id, {user_id: user.id});
 
             //TODO SEND EMAIL Генерируем токен для подтверждения EMAIL и отправляем на почту ссылку
             let token = JWT.generateAccessToken(
