@@ -7,7 +7,7 @@ const passwordErrorMessage = 'Password must be strong. At least one upper case a
 //Создаем пользователя без компании
 export const changePasswordSchema = Joi.object({}).keys({
     password: Joi.string().required().regex(strongPasswordRegex).messages({ 
-        passwordErrorMessage
+        'string.pattern.base': passwordErrorMessage
     }),
     confirm_password: Joi.any().equal(Joi.ref('password')).required().label('Confirm password').messages({ 
         'any.only': '{{#label}} does not match' 

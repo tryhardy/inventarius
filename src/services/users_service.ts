@@ -12,7 +12,7 @@ import { CompaniesService } from "./companies_service";
 import { IWorkerCreateDTO } from "../interfaces/dto/iworker_create_dto";
 import { WorkersService } from "./workers_service";
 import { IUserFilter } from "../interfaces/controllers/user/iuser_filter";
-import { Op } from "sequelize";
+import { Op } from "../../node_modules/sequelize";
 import { IListResult } from "../interfaces/services/ilist_result";
 import { UserGroupsSchema } from "../models/user_groups";
 import { IUSerGroupsFilter } from "../interfaces/controllers/user/isuer_groups_filter";
@@ -171,7 +171,7 @@ export class UsersService extends Service<UsersModel>
      * @param login 
      * @returns 
      */
-    async getById(id: string, active = null)
+    async getById(id: string, active = null, attributes = ['id', 'name', 'last_name', 'email', 'group_id', 'active'])
     {
         let where = {
             id: id
@@ -183,7 +183,7 @@ export class UsersService extends Service<UsersModel>
 
         let user = await this.model.findOne({
             where: where,
-            attributes: ['id', 'name', 'last_name', 'email', 'group_id', 'active'],
+            attributes: attributes,
             include: UsersService.include,
         })
 

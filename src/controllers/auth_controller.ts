@@ -327,8 +327,6 @@ export class AuthController
         res.send(new AppSuccess(result, resultMessage))
     }
 
-    //TODO Проверка, что новый пароль отличается от текущего
-    //TODO требования к паролю
     /**
      * Восстановление пароля
      */
@@ -338,6 +336,7 @@ export class AuthController
     {
         let successMessage = 'Password was changed';
         let errorMessage = 'Wrong hash data provided';
+        let oldPasswordErrorMessage = 'Новый пароль должен отличаться отпредыдущего';
 
         try {
             let userService = new UsersService;
@@ -354,7 +353,13 @@ export class AuthController
             }
 
             let user_id = hashData.data.id;
-            let user = await userService.getById(user_id);
+            let user = await userService.getById(user_id, null, ['id', 'name', 'last_name', 'email', 'group_id', 'active', 'password', 'salt']);
+            let checkPassword = user.validPassword(body.password);
+
+            if (checkPassword) {
+                await hashService.delete(savedHash.id);
+                throw new AppError(IEnumErrorCodes.BAD_REQUEST, oldPasswordErrorMessage)
+            }
 
             if (user && user.id) {
                 //Обновляем пароль юзера
