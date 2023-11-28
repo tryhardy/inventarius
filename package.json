@@ -9,8 +9,9 @@
     "dev": "npm run migrate:up && nodemon src/app.ts",
     "prod": "npm run migrate:up && rm -rf dist/* && npm run build && npm run start",
     "docker:dev": "docker-compose -f docker-compose.dev.yml up --wait -d && docker compose -f docker-compose.dev.yml watch --no-up",
+    "docker:dev:rebuild": "docker-compose -f docker-compose.dev.yml up --wait -d && npm run docker:dev:stop",
     "docker:dev:stop": "docker-compose -f docker-compose.dev.yml down",
-    "docker:prod": "docker-compose -f docker-compose.prod.yml up -d",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up -d --build",
     "docker:prod:stop": "docker-compose -f docker-compose.prod.yml down",
     "migrate:up": "cd migrations && node index.js && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all",
     "migrate:down": "cd migrations && node index.js && npx sequelize-cli db:migrate:undo && npx sequelize-cli db:seed:undo"

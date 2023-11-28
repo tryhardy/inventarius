@@ -11,10 +11,6 @@ const server = createServer(app);
 const port = process.env.PORT || 3000;
 export const debug = true;
 
-//TODO настроить миграции на проекте 
-//TODO обновить readme.md
-//TODO донастроить докер
-
 // Postgres connect
 db.authenticate().catch(error => console.error(error))
 
