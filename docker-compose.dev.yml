@@ -45,10 +45,17 @@ services:
       - postgres
   #express-app service 
   inventarius:
-    image: node:20
-    container_name: inventarius-dev
+    image: inventarius-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    container_name: inventarius-app
     volumes:
-      - ${DOCKER_APP_VOLUME}
+      - ./public:/app/public
+      - ./logs:/app/logs
+      - ./nodemon.json:/app/nodemon.json
+      - .env:/app/.env
     environment:
       PORT: ${DOCKER_PORT}
       MONGO_URL: ${DOCKER_MONGO_URL}
@@ -59,23 +66,27 @@ services:
       DB_PASSWORD: ${DOCKER_DB_PASSWORD}
       DB_DIALECT: ${DOCKER_DB_DIALECT}
       NODE_ENV: ${NODE_ENV}
+    expose:
+      - ${DOCKER_PORT}
     ports:
       - ${DOCKER_PORT}:${DOCKER_PORT}
-    working_dir: /app
-    command: 'npm run start:dev'
     depends_on:
       - mongo
       - postgres
       - pgadmin-compose
       - mongo-express
-    x-develop: 
+    command: npm run dev
+    develop: 
       watch:
         - action: sync
-          path: ./app
-          target: ./app/src
+          path: ./src
+          target: app/src
           ignore:
             - node_modules/
         - action: rebuild
-          path: package.json
+          path: ./package.json
+        - action: sync+restart
+          path: ./migrations
+          target: app/migrations
 volumes:
   db-data:

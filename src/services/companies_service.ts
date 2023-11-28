@@ -80,20 +80,11 @@ export class CompaniesService extends Service<CompaniesModel>
                 where: {
                     id: company_id
                 },
-                include: [
-                    {
-                        model: CompanyTypesSchema,
-                        as: 'type',
-                    },
-                    {
-                        model: UsersSchema,
-                        as: 'creator',
-                        attributes: ['name', 'last_name']
-                    }
-                ]
+                include: []
             };
-
+            
             if (user_id) {
+                
                 let workerQuery = {
                     [Op.or]: [
                         {
@@ -114,6 +105,17 @@ export class CompaniesService extends Service<CompaniesModel>
                     where: workerQuery
                 })
             }
+
+            query.include.push({
+                model: CompanyTypesSchema,
+                as: 'type',
+            });
+
+            query.include.push({
+                model: UsersSchema,
+                as: 'creator',
+                attributes: ['name', 'last_name']
+            });
 
             return await this.model.findOne(query);
         }
@@ -212,18 +214,17 @@ export class CompaniesService extends Service<CompaniesModel>
             }
         }
 
-        let include = [
-            {
-                model: CompanyTypesSchema,
-                as: 'type',
-                where: companyTypeQuery
-            },
-            {
-                model: UsersSchema,
-                as: 'creator',
-                attributes: ['name', 'last_name']
-            }
-        ];
+        let include = [];
+        include.push({
+            model: CompanyTypesSchema,
+            as: 'type',
+            where: companyTypeQuery
+        })
+        include.push({
+            model: UsersSchema,
+            as: 'creator',
+            attributes: ['name', 'last_name']
+        });
 
         if (addWorkerQuery) {
             include.push({

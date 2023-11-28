@@ -71,9 +71,13 @@ export class AuthController
     
                     res.send(new AppSuccess(result, '', this.status))
                 }
+                else {
+                    throw new AppError(IEnumErrorCodes.UNAUTHORIZED, 'Login failed')
+                }
             }
-            
-            throw new AppError(IEnumErrorCodes.UNAUTHORIZED, 'Login failed')
+            else {
+                throw new AppError(IEnumErrorCodes.UNAUTHORIZED, 'Login failed')
+            }            
         }
         catch (error) {
             next(error);

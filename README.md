@@ -31,26 +31,29 @@ $ npm install
 - Через Docker
 - Без Docker
 
-## Старт приложения через Docker  
-
-Первый запуск обязательно выполнять одной из следующих команд:
+## Старт приложения через Docker
 ```bash
-#Запуск приложения в режиме разработки
-npm run docker:start:dev
+#Запуск приложения в режиме разработки с отслеживанием изменений
+npm run docker:dev  
+
+#Остановить приложение
+npm run docker:dev:stop
 
 #Запуск приложения в режиме продакшена
-npm run docker:start:prod
+npm run docker:prod  
+
+#Остановить приложение
+npm run docker:prod:stop
 ```
-Сервер запустится в первый раз с node v20, установятся все необходимые зависимости и миграции.
 
 ## Старт приложения без Docker
 
 ```bash
 # Билд в режиме разработки с отслеживанием изменений
-$ npm run start:dev
+$ npm run dev
 
 # Билд в продакшене
-$ npm run start:prod
+$ npm run prod
 ```
 
 ## Ошибки
@@ -87,8 +90,7 @@ router.get('/test', (req, res, next) => {
 Формат вывода ошибок (json):
 
 ```js
-//Экземпляр класса AppError
-interface IError {
+{
     status: number;
     code : number;
     data ?: any;
@@ -116,7 +118,7 @@ router.get('/test', (req, res, next) => {
 
     //Вызов кастомного лога
     let data = {};
-    LoggerMiddleware.getLog(data, req, 'info').log({
+    LoggerMiddleware.getLog(data, req).log({
         level: LoggerMiddleware.baseLogLevel,
         message: `Some data to log`
     });
