@@ -33,18 +33,21 @@ $ npm install
 
 ## Старт приложения через Docker
 ```bash
-#В режиме разработки с отслеживанием изменений
-npm run docker:dev  
-
-#Остановить приложение
-npm run docker:dev:stop
-
-#В режиме продакшена
+#Запустить приложение
+npm run docker:dev
 npm run docker:prod  
 
 #Остановить приложение
+npm run docker:dev:stop
 npm run docker:prod:stop
+
+#Пересобрать приложение вручную
+npm run docker:dev:rebuild
+npm run docker:prod:rebuild
+
 ```
+**P.S.** Иногда при первой сборке контейнер inventarius-app падает с ошибкой. 
+Это связано с тем, что контейнер с БД postgres не успел собраться полностью. Нужно просто еще раз запустить контейнер либо через командную строку, либо через приложение на десктопе
 
 ## Старт приложения без Docker
 

@@ -75,9 +75,13 @@ export class AuthController
     
                     res.send(new AppSuccess(result, '', this.status))
                 }
+                else {
+                    throw new AppError(IEnumErrorCodes.UNAUTHORIZED, 'Login failed')
+                }
             }
-            
-            throw new AppError(IEnumErrorCodes.UNAUTHORIZED, 'Login failed')
+            else {
+                throw new AppError(IEnumErrorCodes.UNAUTHORIZED, 'Login failed')
+            }            
         }
         catch (error) {
             next(error);
@@ -280,8 +284,6 @@ export class AuthController
                 //Пусть хранится в базе
                 throw new AppError(IEnumErrorCodes.BAD_REQUEST, errorAlreadyConfirmed)
             }
-
-            res.send(hash);
         }
         catch(error) {
             next(error)
