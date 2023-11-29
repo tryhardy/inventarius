@@ -66,6 +66,7 @@ services:
       DB_PASSWORD: ${DOCKER_DB_PASSWORD}
       DB_DIALECT: ${DOCKER_DB_DIALECT}
       NODE_ENV: ${NODE_ENV}
+      DEBUG: true
     expose:
       - ${DOCKER_PORT}
     ports:

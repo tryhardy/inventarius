@@ -9,7 +9,12 @@ import { Container, ERROR_MIDDLEWARE, attachControllers } from '@decorators/expr
 const app = express.default();
 const server = createServer(app);
 const port = process.env.PORT || 3000;
-export const debug = true;
+
+var debug = false;
+if (typeof process.env.DEBUG === 'boolean') {
+    debug = process.env.DEBUG;   
+}
+export { debug };
 
 // Postgres connect
 db.authenticate().catch(error => console.error(error))
@@ -33,8 +38,10 @@ const defaultRouter = express.Router();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Логируем все входящие запросы к АПИ
-app.use(LoggerMiddleware.getRoutLogger);
+if (debug) {
+    // Логируем все входящие запросы к АПИ
+    app.use(LoggerMiddleware.getRoutLogger);
+}
 
 // Путь к хранилищу файлов для публичного использования
 app.use(express.static("public"));

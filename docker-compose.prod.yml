@@ -21,6 +21,7 @@ services:
       DB_PASSWORD: ${DOCKER_DB_PASSWORD}
       DB_DIALECT: ${DOCKER_DB_DIALECT}
       NODE_ENV: production
+      DEBUG: false
     ports:
       - ${PORT}:${PORT}
     working_dir: /app
