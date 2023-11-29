@@ -3,7 +3,7 @@ import { UsersSchema } from './users';
 
 import { DataTypes, Model } from 'sequelize';
 import { ModelOptions } from '../common/options/model_options';
-import { ICompany } from '../interfaces/models/companies/icompany';
+import { ICompany } from '../interfaces/models/icompany';
 
 const options = new ModelOptions('companies');
 

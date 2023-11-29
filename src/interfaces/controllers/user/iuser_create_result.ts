@@ -1,4 +1,4 @@
-import { ICompany } from "../../models/companies/icompany";
+import { ICompany } from "../../models/icompany";
 import { IUser } from "../../models/iuser";
 import { IWorker } from "../../models/iworker";
 
